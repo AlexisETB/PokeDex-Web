@@ -1,6 +1,6 @@
 package ec.edu.uce.DemoPokedex.Services;
 
-import ec.edu.uce.DemoPokedex.Entities.Pokemon;
+import ec.edu.uce.DemoPokedex.Model.Pokemon;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 

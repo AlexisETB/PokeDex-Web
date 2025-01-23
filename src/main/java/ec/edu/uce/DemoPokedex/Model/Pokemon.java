@@ -1,4 +1,4 @@
-package ec.edu.uce.DemoPokedex.Entities;
+package ec.edu.uce.DemoPokedex.Model;
 
 import java.util.List;
 
@@ -19,13 +19,14 @@ public class Pokemon {
     private List<Stat> stats;
     private List<Type> types;
 
+    private Sprites sprites;
+    private List<Evolution> evolutions;
+
     public Pokemon() {}
 
-    public Pokemon(long id, String name,
-                   int baseExperience, int height, int weight, boolean isDefault,
-                   String locationAreaEncounters, int order, List<Ability> abilitites,
-                   List<Move> moves, List<Form> forms,
-                   List<HeldItem> heldItems, List<Stat> stats, List<Type> types) {
+    public Pokemon(long id, String name, int baseExperience, int height, int weight, boolean isDefault, String locationAreaEncounters,
+                   int order, List<Ability> abilitites, List<Move> moves, List<Form> forms, List<HeldItem> heldItems, List<Stat> stats,
+                   List<Type> types, Sprites sprites, List<Evolution> evolutions) {
         this.id = id;
         this.name = name;
         this.baseExperience = baseExperience;
@@ -40,6 +41,30 @@ public class Pokemon {
         this.heldItems = heldItems;
         this.stats = stats;
         this.types = types;
+        this.sprites = sprites;
+        this.evolutions = evolutions;
+    }
+
+    @Override
+    public String toString() {
+        return "Pokemon{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", baseExperience=" + baseExperience +
+                ", height=" + height +
+                ", weight=" + weight +
+                ", isDefault=" + isDefault +
+                ", locationAreaEncounters='" + locationAreaEncounters + '\'' +
+                ", order=" + order +
+                ", abilitites=" + abilitites +
+                ", moves=" + moves +
+                ", forms=" + forms +
+                ", heldItems=" + heldItems +
+                ", stats=" + stats +
+                ", types=" + types +
+                ", sprites=" + sprites +
+                ", evolutions=" + evolutions +
+                '}';
     }
 
     public long getId() {
@@ -130,7 +155,6 @@ public class Pokemon {
         this.forms = forms;
     }
 
-
     public List<HeldItem> getHeldItems() {
         return heldItems;
     }
@@ -155,23 +179,19 @@ public class Pokemon {
         this.types = types;
     }
 
-    @Override
-    public String toString() {
-        return "Pokemon{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", baseExperience=" + baseExperience +
-                ", height=" + height +
-                ", weight=" + weight +
-                ", isDefault=" + isDefault +
-                ", locationAreaEncounters='" + locationAreaEncounters + '\'' +
-                ", order=" + order +
-                ", abilitites=" + abilitites +
-                ", moves=" + moves +
-                ", forms=" + forms +
-                ", heldItems=" + heldItems +
-                ", stats=" + stats +
-                ", types=" + types +
-                '}';
+    public Sprites getSprites() {
+        return sprites;
+    }
+
+    public void setSprites(Sprites sprites) {
+        this.sprites = sprites;
+    }
+
+    public List<Evolution> getEvolutions() {
+        return evolutions;
+    }
+
+    public void setEvolutions(List<Evolution> evolutions) {
+        this.evolutions = evolutions;
     }
 }
