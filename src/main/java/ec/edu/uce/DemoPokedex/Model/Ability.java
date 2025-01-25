@@ -2,16 +2,14 @@ package ec.edu.uce.DemoPokedex.Model;
 
 public class Ability {
     private String name;
-    private String url;
     private boolean isHidden;
     private int slot;
 
     public Ability (){
 
     }
-    public Ability(String name, String url, boolean isHidden, int slot) {
+    public Ability(String name, boolean isHidden, int slot) {
         this.name = name;
-        this.url = url;
         this.isHidden = isHidden;
         this.slot = slot;
 
@@ -23,14 +21,6 @@ public class Ability {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
     }
 
     public boolean isHidden() {
@@ -53,7 +43,6 @@ public class Ability {
     public String toString() {
         return "Ability{" +
                 "name='" + name + '\'' +
-                ", url='" + url + '\'' +
                 ", isHidden=" + isHidden +
                 ", slot=" + slot +
                 '}';

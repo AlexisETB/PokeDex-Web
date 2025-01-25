@@ -1,21 +1,20 @@
 package ec.edu.uce.DemoPokedex.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Pokemon {
     private long id;
     private String name;
-    private int baseExperience;
-    private int height;
-    private int weight;
-    private boolean isDefault;
-    private String locationAreaEncounters;
-    private int order;
+    private int base_experience;
+    private double height;
+    private double weight;
 
-    private List<Ability> abilitites;
+    private List<Ability> abilities;
     private List<Move> moves;
-    private List<Form> forms;
-    private List<HeldItem> heldItems;
     private List<Stat> stats;
     private List<Type> types;
 
@@ -24,21 +23,15 @@ public class Pokemon {
 
     public Pokemon() {}
 
-    public Pokemon(long id, String name, int baseExperience, int height, int weight, boolean isDefault, String locationAreaEncounters,
-                   int order, List<Ability> abilitites, List<Move> moves, List<Form> forms, List<HeldItem> heldItems, List<Stat> stats,
-                   List<Type> types, Sprites sprites, List<Evolution> evolutions) {
+    public Pokemon(long id, String name, int base_experience, double height, double weight, List<Ability> abilities, List<Move> moves,
+                   List<Stat> stats, List<Type> types, Sprites sprites, List<Evolution> evolutions) {
         this.id = id;
         this.name = name;
-        this.baseExperience = baseExperience;
+        this.base_experience = base_experience;
         this.height = height;
         this.weight = weight;
-        this.isDefault = isDefault;
-        this.locationAreaEncounters = locationAreaEncounters;
-        this.order = order;
-        this.abilitites = abilitites;
+        this.abilities = abilities;
         this.moves = moves;
-        this.forms = forms;
-        this.heldItems = heldItems;
         this.stats = stats;
         this.types = types;
         this.sprites = sprites;
@@ -50,16 +43,11 @@ public class Pokemon {
         return "Pokemon{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
-                ", baseExperience=" + baseExperience +
+                ", baseExperience=" + base_experience +
                 ", height=" + height +
                 ", weight=" + weight +
-                ", isDefault=" + isDefault +
-                ", locationAreaEncounters='" + locationAreaEncounters + '\'' +
-                ", order=" + order +
-                ", abilitites=" + abilitites +
+                ", abilitites=" + abilities +
                 ", moves=" + moves +
-                ", forms=" + forms +
-                ", heldItems=" + heldItems +
                 ", stats=" + stats +
                 ", types=" + types +
                 ", sprites=" + sprites +
@@ -84,59 +72,35 @@ public class Pokemon {
     }
 
     public int getBaseExperience() {
-        return baseExperience;
+        return base_experience;
     }
 
-    public void setBaseExperience(int baseExperience) {
-        this.baseExperience = baseExperience;
+    public void setBaseExperience(int base_experience) {
+        this.base_experience = base_experience;
     }
 
-    public int getHeight() {
+    public double getHeight() {
         return height;
     }
 
-    public void setHeight(int height) {
+    public void setHeight(double height) {
         this.height = height;
     }
 
-    public int getWeight() {
+    public double getWeight() {
         return weight;
     }
 
-    public void setWeight(int weight) {
+    public void setWeight(double weight) {
         this.weight = weight;
     }
 
-    public boolean isDefault() {
-        return isDefault;
+    public List<Ability> getAbilities() {
+        return abilities;
     }
 
-    public void setDefault(boolean aDefault) {
-        isDefault = aDefault;
-    }
-
-    public String getLocationAreaEncounters() {
-        return locationAreaEncounters;
-    }
-
-    public void setLocationAreaEncounters(String locationAreaEncounters) {
-        this.locationAreaEncounters = locationAreaEncounters;
-    }
-
-    public int getOrder() {
-        return order;
-    }
-
-    public void setOrder(int order) {
-        this.order = order;
-    }
-
-    public List<Ability> getAbilitites() {
-        return abilitites;
-    }
-
-    public void setAbilitites(List<Ability> abilitites) {
-        this.abilitites = abilitites;
+    public void setAbilities(List<Ability> abilitites) {
+        this.abilities = abilitites;
     }
 
     public List<Move> getMoves() {
@@ -145,22 +109,6 @@ public class Pokemon {
 
     public void setMoves(List<Move> moves) {
         this.moves = moves;
-    }
-
-    public List<Form> getForms() {
-        return forms;
-    }
-
-    public void setForms(List<Form> forms) {
-        this.forms = forms;
-    }
-
-    public List<HeldItem> getHeldItems() {
-        return heldItems;
-    }
-
-    public void setHeldItems(List<HeldItem> heldItems) {
-        this.heldItems = heldItems;
     }
 
     public List<Stat> getStats() {

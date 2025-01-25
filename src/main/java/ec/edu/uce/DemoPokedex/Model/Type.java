@@ -3,15 +3,13 @@ package ec.edu.uce.DemoPokedex.Model;
 public class Type {
     private int slot;
     private String name;
-    private String url;
 
     public Type(){
 
     }
-    public Type(int slot, String name, String url) {
+    public Type(int slot, String name) {
         this.slot = slot;
         this.name = name;
-        this.url = url;
 
     }
 
@@ -31,20 +29,11 @@ public class Type {
         this.name = name;
     }
 
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
     @Override
     public String toString() {
         return "Type{" +
                 "slot=" + slot +
                 ", name='" + name + '\'' +
-                ", url='" + url + '\'' +
                 '}';
     }
 }

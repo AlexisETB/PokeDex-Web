@@ -11,14 +11,14 @@ import java.util.List;
 
 @RestController
 public class PokeController {
-    private final PokeService pokeService;
-
-    public PokeController(PokeService pokeService) {
-        this.pokeService = pokeService;
-    }
-
-    @GetMapping("/api/pokemons")
-    public List<Pokemon> getAllPokemons() {
-        return pokeService.getAllPokemons();
-    }
+//    private final PokeService pokeService;
+//
+//    public PokeController(PokeService pokeService) {
+//        this.pokeService = pokeService;
+//    }
+//
+//    @GetMapping("/api/pokemons")
+//    public List<Pokemon> getAllPokemons() {
+//        return pokeService.getAllPokemons();
+//    }
 }

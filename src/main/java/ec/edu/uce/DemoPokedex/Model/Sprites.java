@@ -6,6 +6,7 @@ public class Sprites {
     private String backDefault;
     private String backShiny;
 
+    public Sprites (){}
     public Sprites(String frontDefault, String frontShiny, String backDefault, String backShiny) {
         this.frontDefault = frontDefault;
         this.frontShiny = frontShiny;

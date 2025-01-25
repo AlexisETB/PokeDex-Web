@@ -10,9 +10,9 @@ import java.util.List;
 public class PokeService {
     private final String POKE_API_URL = "https://pokeapi.co/api/v2/pokemon?limit=100";
 
-    public List<Pokemon> getAllPokemons() {
-        RestTemplate restTemplate = new RestTemplate();
-        PokemonResponse response = restTemplate.getForObject(POKE_API_URL, PokemonResponse.class);
-        return response.getResults();
-    }
+//    public List<Pokemon> getAllPokemons() {
+//        RestTemplate restTemplate = new RestTemplate();
+//        PokemonResponse response = restTemplate.getForObject(POKE_API_URL, PokemonResponse.class);
+//        return response.getResults();
+//    }
 }
