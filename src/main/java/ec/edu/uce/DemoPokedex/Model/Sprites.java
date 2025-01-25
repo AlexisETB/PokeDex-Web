@@ -1,5 +1,8 @@
 package ec.edu.uce.DemoPokedex.Model;
 
+import jakarta.persistence.Embeddable;
+
+@Embeddable
 public class Sprites {
     private String frontDefault;
     private String frontShiny;

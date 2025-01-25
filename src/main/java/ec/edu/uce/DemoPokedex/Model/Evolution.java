@@ -1,10 +1,19 @@
 package ec.edu.uce.DemoPokedex.Model;
 
+import jakarta.persistence.*;
+
+@Entity
 public class Evolution {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     private String speciesName; // Nombre del Pokémon evolutivo
-    private String trigger;     // Condición de evolución (e.g., nivel, objeto)
+    private String evolutiontrigger;     // Condición de evolución (e.g., nivel, objeto)
     private Integer minLevel;   // Nivel mínimo requerido (si aplica)
 
+    @ManyToOne
+    @JoinColumn(name = "pokemon_id")
+    private Pokemon pokemon;
 
     // Getters y Setters
     public String getSpeciesName() {
@@ -16,12 +25,12 @@ public class Evolution {
     }
 
 
-    public String getTrigger() {
-        return trigger;
+    public String getEvolutiontrigger() {
+        return evolutiontrigger;
     }
 
-    public void setTrigger(String trigger) {
-        this.trigger = trigger;
+    public void setEvolutiontrigger(String evolutiontrigger) {
+        this.evolutiontrigger = evolutiontrigger;
     }
 
     public Integer getMinLevel() {

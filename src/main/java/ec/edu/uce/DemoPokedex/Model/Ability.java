@@ -1,18 +1,47 @@
 package ec.edu.uce.DemoPokedex.Model;
 
+import jakarta.persistence.*;
+
+import java.util.List;
+
+@Entity
 public class Ability {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(unique = true, nullable = false)
     private String name;
+
+    @Column
     private boolean isHidden;
-    private int slot;
 
-    public Ability (){
+    @ManyToMany(mappedBy = "abilities")
+    private List<Pokemon> pokemon;
 
-    }
-    public Ability(String name, boolean isHidden, int slot) {
+    public Ability (){}
+
+    public Ability(String name, boolean isHidden, List<Pokemon> pokemon) {
         this.name = name;
         this.isHidden = isHidden;
-        this.slot = slot;
+        this.pokemon = pokemon;
+    }
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public List<Pokemon> getPokemon() {
+        return pokemon;
+    }
+
+    public void setPokemon(List<Pokemon> pokemon) {
+        this.pokemon = pokemon;
     }
 
     public String getName() {
@@ -31,20 +60,11 @@ public class Ability {
         isHidden = hidden;
     }
 
-    public int getSlot() {
-        return slot;
-    }
-
-    public void setSlot(int slot) {
-        this.slot = slot;
-    }
-
     @Override
     public String toString() {
         return "Ability{" +
                 "name='" + name + '\'' +
                 ", isHidden=" + isHidden +
-                ", slot=" + slot +
                 '}';
     }
 }

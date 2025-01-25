@@ -1,24 +1,43 @@
 package ec.edu.uce.DemoPokedex.Model;
 
+import jakarta.persistence.*;
+
+import java.util.List;
+
+@Entity
 public class Type {
-    private int slot;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(unique = true, nullable = false)
     private String name;
+
+    @ManyToMany(mappedBy = "types")
+    private List<Pokemon> pokemon;
 
     public Type(){
 
     }
-    public Type(int slot, String name) {
-        this.slot = slot;
+    public Type(String name, List<Pokemon> pokemon) {
         this.name = name;
-
+        this.pokemon = pokemon;
     }
 
-    public int getSlot() {
-        return slot;
+    public Long getId() {
+        return id;
     }
 
-    public void setSlot(int slot) {
-        this.slot = slot;
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public List<Pokemon> getPokemon() {
+        return pokemon;
+    }
+
+    public void setPokemon(List<Pokemon> pokemon) {
+        this.pokemon = pokemon;
     }
 
     public String getName() {
@@ -32,7 +51,6 @@ public class Type {
     @Override
     public String toString() {
         return "Type{" +
-                "slot=" + slot +
                 ", name='" + name + '\'' +
                 '}';
     }
