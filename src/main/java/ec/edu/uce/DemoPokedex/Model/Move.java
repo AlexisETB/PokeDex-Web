@@ -1,9 +1,17 @@
 package ec.edu.uce.DemoPokedex.Model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
 @Entity
 public class Move {
     @Id
@@ -15,38 +23,6 @@ public class Move {
 
     @ManyToMany(mappedBy = "moves")
     private List<Pokemon> pokemon;
-
-    public Move() {}
-
-    public Move(String name, List<Pokemon> pokemon) {
-        this.name = name;
-        this.pokemon = pokemon;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public List<Pokemon> getPokemon() {
-        return pokemon;
-    }
-
-    public void setPokemon(List<Pokemon> pokemon) {
-        this.pokemon = pokemon;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
 
     @Override
     public String toString() {

@@ -54,7 +54,8 @@ public class PokeApiClient {
             pokemon.setName(root.get("name").asText());
             pokemon.setWeight(root.get("weight").asDouble());
             pokemon.setHeight(root.get("height").asDouble());
-            pokemon.setBaseExperience(root.get("base_experience").asInt());
+            pokemon.setBase_experience(root.get("base_experience").asInt());
+
 
             // Habilidades
             List<Ability> abilities = new ArrayList<>();

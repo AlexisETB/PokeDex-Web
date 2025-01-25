@@ -1,7 +1,15 @@
 package ec.edu.uce.DemoPokedex.Model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
 @Entity
 public class Evolution {
     @Id
@@ -14,31 +22,5 @@ public class Evolution {
     @ManyToOne
     @JoinColumn(name = "pokemon_id")
     private Pokemon pokemon;
-
-    // Getters y Setters
-    public String getSpeciesName() {
-        return speciesName;
-    }
-
-    public void setSpeciesName(String speciesName) {
-        this.speciesName = speciesName;
-    }
-
-
-    public String getEvolutiontrigger() {
-        return evolutiontrigger;
-    }
-
-    public void setEvolutiontrigger(String evolutiontrigger) {
-        this.evolutiontrigger = evolutiontrigger;
-    }
-
-    public Integer getMinLevel() {
-        return minLevel;
-    }
-
-    public void setMinLevel(Integer minLevel) {
-        this.minLevel = minLevel;
-    }
 
 }
