@@ -13,6 +13,6 @@ public class PokeServiceTest implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // Prueba completa
         System.out.println("Probando sincronización completa...");
-        pokeService.saveAllData();
+        pokeService.saveAllPokemon();
     }
 }

@@ -16,11 +16,5 @@ public class Evolution {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String speciesName; // Nombre del Pokémon evolutivo
-    private String evolutiontrigger;     // Condición de evolución (e.g., nivel, objeto)
-    private Integer minLevel;   // Nivel mínimo requerido (si aplica)
-
-    @ManyToOne
-    @JoinColumn(name = "pokemon_id")
-    private Pokemon pokemon;
 
 }

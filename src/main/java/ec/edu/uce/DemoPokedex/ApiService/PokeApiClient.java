@@ -14,7 +14,7 @@ import java.util.List;
 public class PokeApiClient {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
-    private static final String BASE_URL = "https://pokeapi.co/api/v2/";
+   private static final String BASE_URL = "https://pokeapi.co/api/v2/";
 
     public PokeApiClient() {
         this.restTemplate = new RestTemplate();
@@ -22,61 +22,54 @@ public class PokeApiClient {
     }
 
     public List<Pokemon> getAllPokemon() {
+        List<Pokemon> pokemonList = new ArrayList<>();
+        String url = BASE_URL + "pokemon?limit=10&offset=0";
+
+
         try {
-            String url = BASE_URL + "pokemon?limit=1024&offset=0";
+            // Obtener la lista inicial de Pokémon (IDs y nombres)
             String response = restTemplate.getForObject(url, String.class);
-
             JsonNode root = objectMapper.readTree(response);
-            List<Pokemon> pokemons = new ArrayList<>();
 
-            for (JsonNode result : root.get("results")) {
-                String pokemonUrl = result.get("url").asText();
-                Pokemon pokemon = getPokemonByUrl(pokemonUrl);
-                pokemons.add(pokemon);
+            JsonNode results = root.get("results");
+
+            // Iterar sobre cada Pokémon en la lista y obtener sus datos completos
+            if (results != null) {
+                for (JsonNode pokemonNode : results) {
+                    String pokemonUrl = pokemonNode.get("url").asText();
+                    Pokemon pokemon = getPokemonByUrl(pokemonUrl);
+                    pokemonList.add(pokemon);
+                }
             }
-
-            return pokemons;
         } catch (Exception e) {
-            throw new RuntimeException("Error fetching all Pokémon: " + e.getMessage(), e);
+            throw new RuntimeException("Error al obtener los datos de los Pokémon: " + e.getMessage(), e);
         }
+
+        return pokemonList;
     }
 
-//     Metodo para obtener un Pokémon por url
     public Pokemon getPokemonByUrl(String url) {
-        try {
+        try{
             String response = restTemplate.getForObject(url, String.class);
-
             JsonNode root = objectMapper.readTree(response);
 
-            // Mapeo de los campos necesarios
             Pokemon pokemon = new Pokemon();
             pokemon.setId(root.get("id").asLong());
             pokemon.setName(root.get("name").asText());
-            pokemon.setWeight(root.get("weight").asDouble());
             pokemon.setHeight(root.get("height").asDouble());
+            pokemon.setWeight(root.get("weight").asDouble());
             pokemon.setBase_experience(root.get("base_experience").asInt());
 
-
-            // Habilidades
+            //abilities
             List<Ability> abilities = new ArrayList<>();
             for (JsonNode abilityNode : root.get("abilities")) {
                 Ability ability = new Ability();
                 ability.setName(abilityNode.get("ability").get("name").asText());
-                ability.setHidden(abilityNode.get("is_hidden").asBoolean());
                 abilities.add(ability);
             }
             pokemon.setAbilities(abilities);
 
-            // Movimientos
-            List<Move> moves = new ArrayList<>();
-            for (JsonNode moveNode : root.get("moves")) {
-                Move move = new Move();
-                move.setName(moveNode.get("move").get("name").asText());
-                moves.add(move);
-            }
-            pokemon.setMoves(moves);
-
-            // Tipos
+            //types
             List<Type> types = new ArrayList<>();
             for (JsonNode typeNode : root.get("types")) {
                 Type type = new Type();
@@ -85,7 +78,7 @@ public class PokeApiClient {
             }
             pokemon.setTypes(types);
 
-            // Estadísticas
+            //stast
             List<Stat> stats = new ArrayList<>();
             for (JsonNode statNode : root.get("stats")) {
                 Stat stat = new Stat();
@@ -96,81 +89,47 @@ public class PokeApiClient {
             }
             pokemon.setStats(stats);
 
-            // Sprites
+            //Sprites
             Sprites sprites = new Sprites();
             sprites.setFrontDefault(getSpriteValue(root, "front_default"));
-            sprites.setFrontShiny(getSpriteValue(root, "front_shiny"));
-            sprites.setBackDefault(getSpriteValue(root, "back_default"));
-            sprites.setBackShiny(getSpriteValue(root, "back_shiny"));
             pokemon.setSprites(sprites);
 
-            // Retorno del objeto mapeado
             return pokemon;
         } catch (Exception e) {
-            throw new RuntimeException("Error fetching Pokémon data: " + e.getMessage(), e);
+            throw new RuntimeException(e);
         }
     }
 
-    public List<Evolution> getAllEvolutions() {
+    public List<Long> getEvolutionChain(String evolutionChainUrl) {
+        List<Long> evolutionIds = new ArrayList<>();
         try {
-            String url = BASE_URL + "evolution-chain?limit=500&offset=0";
-            String response = restTemplate.getForObject(url, String.class);
-
-            JsonNode root = objectMapper.readTree(response);
-            List<Evolution> evolutions = new ArrayList<>();
-
-            for (JsonNode result : root.get("results")) {
-                String evolutionUrl = result.get("url").asText();
-                List<Evolution> chainEvolutions = getEvolutionChainByUrl(evolutionUrl);
-                evolutions.addAll(chainEvolutions);
-            }
-
-            return evolutions;
-        } catch (Exception e) {
-            throw new RuntimeException("Error fetching all evolutions: " + e.getMessage(), e);
-        }
-    }
-
-    // Metodo para obtener la cadena de evolución por url
-    public List<Evolution> getEvolutionChainByUrl(String url) {
-        try {
-            String response = restTemplate.getForObject(url, String.class);
-
-            // Parseo de la respuesta JSON
-            JsonNode root = objectMapper.readTree(response);
+            JsonNode root = objectMapper.readTree(restTemplate.getForObject(evolutionChainUrl, String.class));
             JsonNode chain = root.get("chain");
 
-            // Procesar la cadena de evolución recursivamente
-            List<Evolution> evolutions = new ArrayList<>();
-            processEvolutionChain(chain, evolutions);
+            // Recorrer la cadena de evoluciones
+            while (chain != null) {
+                String speciesUrl = chain.get("species").get("url").asText();
+                Long id = extractIdFromUrl(speciesUrl);
+                evolutionIds.add(id);
 
-            return evolutions;
-
+                chain = chain.get("evolves_to").isEmpty() ? null : chain.get("evolves_to").get(0);
+            }
         } catch (Exception e) {
-            throw new RuntimeException("Error fetching Evolution Chain data: " + e.getMessage(), e);
+            throw new RuntimeException("Error al obtener la cadena de evoluciones: " + e.getMessage(), e);
         }
+
+        return evolutionIds;
     }
 
-    private void processEvolutionChain(JsonNode chainNode, List<Evolution> evolutions) {
-        if (chainNode == null) return;
-
-        Evolution evolution = new Evolution();
-        evolution.setSpeciesName(chainNode.get("species").get("name").asText());
-
-        if (chainNode.has("evolution_details") && chainNode.get("evolution_details").size() > 0) {
-            JsonNode details = chainNode.get("evolution_details").get(0);
-            evolution.setEvolutiontrigger(details.get("trigger").get("name").asText());
-            evolution.setMinLevel(details.has("min_level") ? details.get("min_level").asInt() : null);
-        }
-
-        evolutions.add(evolution);
-
-        // Procesar las evoluciones subsecuentes
-        for (JsonNode next : chainNode.get("evolves_to")) {
-            processEvolutionChain(next, evolutions);
-        }
+    /**
+     * Extrae el ID de un Pokémon desde su URL.
+     * @param url URL del Pokémon o especie.
+     * @return ID del Pokémon.
+     */
+    private Long extractIdFromUrl(String url) {
+        String[] parts = url.split("/");
+        return Long.parseLong(parts[parts.length - 1]);
     }
-
     private String getSpriteValue(JsonNode root, String spriteKey) {
         return root.get("sprites").has(spriteKey) && !root.get("sprites").get(spriteKey).isNull()
                 ? root.get("sprites").get(spriteKey).asText()

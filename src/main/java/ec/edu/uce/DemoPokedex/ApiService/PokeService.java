@@ -29,74 +29,54 @@ public class PokeService {
     @Autowired
     private AbilityRepository abilityRepository;
 
-    @Autowired
-    private MoveRepository moveRepository;
 
     // Metodo para guardar todos los Pokémon desde la API
     public void saveAllPokemon() {
-
-        //Executor executor = Executors.newFixedThreadPool(100);
-
         try {
-            System.out.println("Iniciando sincronización de Pokémon...");
+            System.out.println("Iniciando Guardado de Pokémon...");
             List<Pokemon> pokemons = pokeApiClient.getAllPokemon(); // Obtiene todos los Pokémon desde la API
 
             for (Pokemon pokemon : pokemons) {
-                // Manejo de tipos
-                List<Type> types = new ArrayList<>();
-                for (Type type : pokemon.getTypes()) {
-                    Optional<Type> existingType = typeRepository.findByName(type.getName());
-                    types.add(existingType.orElseGet(() -> typeRepository.save(type)));
-                }
-                pokemon.setTypes(types);
-
-                // Manejo de habilidades
-                List<Ability> abilities = new ArrayList<>();
-                for (Ability ability : pokemon.getAbilities()) {
-                    Optional<Ability> existingAbility = abilityRepository.findByName(ability.getName());
-                    abilities.add(existingAbility.orElseGet(() -> abilityRepository.save(ability)));
-                }
-                pokemon.setAbilities(abilities);
-
-                // Manejo de movimientos
-                List<Move> moves = new ArrayList<>();
-                for (Move move : pokemon.getMoves()) {
-                    Optional<Move> existingMove = moveRepository.findByName(move.getName());
-                    moves.add(existingMove.orElseGet(() -> moveRepository.save(move)));
-                }
-                pokemon.setMoves(moves);
-
-                // Guardar el Pokémon con referencias a las entidades relacionadas
+                // Las habilidades y tipos ya vienen como listas de cadenas, no requieren procesamiento adicional
                 pokemonRepository.save(pokemon);
             }
 
-            System.out.println("Sincronización de Pokémon completada. Total sincronizados: " + pokemons.size());
+            System.out.println("Guardado de Pokémon completado. Total guardados: " + pokemons.size());
         } catch (Exception e) {
-            System.err.println("Error durante la sincronización de Pokémon: " + e.getMessage());
+            System.err.println("Error durante el guardado de Pokémon: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    // Metodo para guardar todas las evoluciones desde la API
-    public void saveAllEvolutions() {
-        try {
-            System.out.println("Iniciando sincronización de evoluciones...");
-            List<Evolution> evolutions = pokeApiClient.getAllEvolutions(); // Obtiene todas las cadenas de evolución desde la API
-
-            // Guardar las evoluciones en la base de datos
-            evolutionRepository.saveAll(evolutions);
-            System.out.println("Sincronización de evoluciones completada. Total sincronizadas: " + evolutions.size());
-        } catch (Exception e) {
-            System.err.println("Error durante la sincronización de evoluciones: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    // Metodo para guardar todo (Pokemon + Evoluciones)
-    public void saveAllData() {
-        System.out.println("Iniciando sincronización completa de datos...");
-        saveAllPokemon();
-        saveAllEvolutions();
-        System.out.println("Sincronización completa finalizada.");
-    }
+//    // Metodo para guardar todas las evoluciones desde la API
+//    public void saveAllEvolutions() {
+//        try {
+//            System.out.println("Iniciando sincronización de evoluciones...");
+//            List<Pokemon> pokemons = pokemonRepository.findAll(); // Obtener todos los Pokémon existentes
+//
+//            for (Pokemon pokemon : pokemons) {
+//                try {
+//                    List<String> evolutionIds = pokeApiClient.getEvolutionIdsByPokemonId(pokemon.getId());
+//                    pokemon.setEvolutionIds(evolutionIds);
+//                    pokemonRepository.save(pokemon);
+//                } catch (Exception e) {
+//                    System.err.println("Error al procesar evoluciones para Pokémon: " + pokemon.getName());
+//                    e.printStackTrace();
+//                }
+//            }
+//
+//            System.out.println("Sincronización de evoluciones completada.");
+//        } catch (Exception e) {
+//            System.err.println("Error durante la sincronización de evoluciones: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    // Metodo para guardar todo (Pokemon + Evoluciones)
+//    public void saveAllData() {
+//        System.out.println("Iniciando sincronización completa de datos...");
+//        saveAllPokemon();
+//        saveAllEvolutions();
+//        System.out.println("Sincronización completa finalizada.");
+//    }
 }

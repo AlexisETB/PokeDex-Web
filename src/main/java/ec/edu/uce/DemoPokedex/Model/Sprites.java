@@ -13,17 +13,12 @@ import lombok.Setter;
 @Embeddable
 public class Sprites {
     private String frontDefault;
-    private String frontShiny;
-    private String backDefault;
-    private String backShiny;
+
 
     @Override
     public String toString() {
         return "Sprites{" +
                 "frontDefault='" + frontDefault + '\'' +
-                ", frontShiny='" + frontShiny + '\'' +
-                ", backDefault='" + backDefault + '\'' +
-                ", backShiny='" + backShiny + '\'' +
                 '}';
     }
 }

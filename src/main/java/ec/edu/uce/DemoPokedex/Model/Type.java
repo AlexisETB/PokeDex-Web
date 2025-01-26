@@ -21,9 +21,6 @@ public class Type {
     @Column(unique = true, nullable = false)
     private String name;
 
-    @ManyToMany(mappedBy = "types")
-    private List<Pokemon> pokemon;
-
     @Override
     public String toString() {
         return "Type{" +

@@ -22,31 +22,13 @@ public class Pokemon {
     private double height;
     private double weight;
 
-    @ManyToMany
-    @JoinTable(
-            name = "pokemon_ability",
-            joinColumns = @JoinColumn(name = "pokemon_id"),
-            inverseJoinColumns = @JoinColumn(name = "ability_id")
-    )
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Ability> abilities;
-
-    @ManyToMany
-    @JoinTable(
-            name = "pokemon_move",
-            joinColumns = @JoinColumn(name = "pokemon_id"),
-            inverseJoinColumns = @JoinColumn(name = "move_id")
-    )
-    private List<Move> moves;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Stat> stats;
 
-    @ManyToMany
-    @JoinTable(
-            name = "pokemon_type",
-            joinColumns = @JoinColumn(name = "pokemon_id"),
-            inverseJoinColumns = @JoinColumn(name = "type_id")
-    )
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Type> types;
 
     @Embedded
@@ -55,21 +37,4 @@ public class Pokemon {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Evolution> evolutions;
 
-
-    @Override
-    public String toString() {
-        return "Pokemon{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", baseExperience=" + base_experience +
-                ", height=" + height +
-                ", weight=" + weight +
-                ", abilitites=" + abilities +
-                ", moves=" + moves +
-                ", stats=" + stats +
-                ", types=" + types +
-                ", sprites=" + sprites +
-                ", evolutions=" + evolutions +
-                '}';
-    }
 }
