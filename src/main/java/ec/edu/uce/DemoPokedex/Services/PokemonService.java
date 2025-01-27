@@ -1,7 +1,7 @@
 package ec.edu.uce.DemoPokedex.Services;
 
 import ec.edu.uce.DemoPokedex.Model.Pokemon;
-import ec.edu.uce.DemoPokedex.Repository.*;
+import ec.edu.uce.DemoPokedex.Repository.PokemonRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,12 +14,7 @@ public class PokemonService {
     @Autowired
     private PokemonRepository pokemonRepository;
 
-    @Autowired
-    private TypeRepository typeRepository;
-
-    @Autowired
-    private AbilityRepository abilityRepository;
-
+    // Obtener todos los Pokémon
     @Transactional(readOnly = true)
     public List<Pokemon> getAllPokemon() {
         return pokemonRepository.findAll();
@@ -34,26 +29,30 @@ public class PokemonService {
     // Obtener Pokémon por nombre
     @Transactional(readOnly = true)
     public List<Pokemon> getPokemonByName(String name) {
-        return pokemonRepository.findAll().stream()
-                .filter(pokemon -> pokemon.getName().equalsIgnoreCase(name))
-                .toList();
+        return pokemonRepository.findByNameIgnoreCase(name);
     }
 
     // Obtener Pokémon por tipo
     @Transactional(readOnly = true)
     public List<Pokemon> getPokemonByType(String typeName) {
-        return pokemonRepository.findAll().stream()
-                .filter(pokemon -> pokemon.getTypes().stream()
-                        .anyMatch(type -> type.getName().equalsIgnoreCase(typeName)))
-                .toList();
+        return pokemonRepository.findByTypeName(typeName);
+    }
+
+    // Obtener las evoluciones de un Pokémon por su ID
+    @Transactional(readOnly = true)
+    public List<Long> getEvolutionsById(Long id) {
+        return pokemonRepository.findEvolutionsById(id);
+    }
+
+    // Obtener el sprite de un Pokémon por su ID
+    @Transactional(readOnly = true)
+    public Optional<String> getSpriteById(Long id) {
+        return pokemonRepository.findSpriteById(id);
     }
 
     // Obtener Pokémon por habilidad
     @Transactional(readOnly = true)
     public List<Pokemon> getPokemonByAbility(String abilityName) {
-        return pokemonRepository.findAll().stream()
-                .filter(pokemon -> pokemon.getAbilities().stream()
-                        .anyMatch(ability -> ability.getName().equalsIgnoreCase(abilityName)))
-                .toList();
+        return pokemonRepository.findByAbilityName(abilityName);
     }
 }
