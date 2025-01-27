@@ -29,6 +29,10 @@ public interface PokemonRepository extends JpaRepository<Pokemon, Long> {
     @Query("SELECT p.sprites.frontDefault FROM Pokemon p WHERE p.id = :id")
     Optional<String> findSpriteById(@Param("id") Long id);
 
+    @Query("SELECT p FROM Pokemon p LEFT JOIN FETCH p.types LEFT JOIN FETCH p.abilities")
+    List<Pokemon> findAllWithTypesAndAbilities();
+
+
     // Obtener un Pokémon junto con sus evoluciones (con JOIN FETCH)
     @Query("SELECT p FROM Pokemon p LEFT JOIN FETCH p.evolutions WHERE p.id = :id")
     Optional<Pokemon> findByIdWithEvolutions(@Param("id") Long id);

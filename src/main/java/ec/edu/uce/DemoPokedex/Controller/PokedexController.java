@@ -179,7 +179,7 @@ public class PokedexController {
             pokeService.saveAllData();
             mostrarMensaje("Datos cargados exitosamente desde la API.");
 
-            mostrarTodosLosPokemon();
+            //mostrarTodosLosPokemon();
         } catch (Exception e) {
             mostrarMensaje("Ocurrió un error al cargar los datos: " + e.getMessage());
         }

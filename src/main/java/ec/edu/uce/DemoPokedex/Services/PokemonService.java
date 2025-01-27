@@ -60,4 +60,9 @@ public class PokemonService {
     public List<Pokemon> getPokemonByAbility(String abilityName) {
         return pokemonRepository.findByAbilityName(abilityName);
     }
+
+    @Transactional(readOnly = true)
+    public List<Pokemon> findAllWithTypesAndAbilities(){
+        return pokemonRepository.findAllWithTypesAndAbilities();
+    }
 }
