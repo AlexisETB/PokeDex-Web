@@ -12,7 +12,7 @@ public class PokeServiceTest implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         // Prueba completa
-        System.out.println("Probando sincronización completa...");
-        pokeService.saveAllData();
+//        System.out.println("Probando sincronización completa...");
+//        pokeService.saveAllData();
     }
 }
