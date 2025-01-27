@@ -10,16 +10,16 @@ import java.util.Optional;
 
 public interface PokemonRepository extends JpaRepository<Pokemon, Long> {
 
-    // Método para buscar Pokémon por nombre (case insensitive)
+    // Metodo para buscar Pokémon por nombre (case insensitive)
     List<Pokemon> findByNameIgnoreCase(String name);
 
-    // Método para buscar Pokémon por tipo
-    @Query("SELECT p FROM Pokemon p JOIN p.types t WHERE t.name = :typeName")
-    List<Pokemon> findByType(@Param("typeName") String typeName);
+    // Metodo para buscar Pokémon por tipo
 
-    // Método para buscar Pokémon por habilidad
-    @Query("SELECT p FROM Pokemon p JOIN p.abilities a WHERE a.name = :abilityName")
-    List<Pokemon> findByAbility(@Param("abilityName") String abilityName);
+    List<Pokemon> findByType(String typeName);
+
+    // Metodo para buscar Pokémon por habilidad
+
+    List<Pokemon> findByAbility(String abilityName);
 
     @Query("SELECT p FROM Pokemon p LEFT JOIN FETCH p.evolutions WHERE p.id = :id")
     Optional<Pokemon> findByIdWithEvolutions(@Param("id") Long id);

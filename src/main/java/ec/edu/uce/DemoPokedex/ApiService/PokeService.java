@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,7 +22,7 @@ public class PokeService {
     @Autowired
     private PokemonRepository pokemonRepository;
 
-    private final ExecutorService executor = Executors.newFixedThreadPool(10);
+    private final ExecutorService executor = Executors.newFixedThreadPool(15);
 
     // Metodo para guardar todos los Pokémon desde la API
     public void saveAllPokemon() {
@@ -29,11 +30,13 @@ public class PokeService {
             System.out.println("Iniciando Guardado de Pokémon...");
             List<Pokemon> pokemons = pokeApiClient.getAllPokemon(); // Obtiene todos los Pokémon desde la API
 
-            for (Pokemon pokemon : pokemons) {
-                // Las habilidades y tipos ya vienen como listas de cadenas, no requieren procesamiento adicional
-                pokemonRepository.save(pokemon);
-            }
+            // Guardar cada Pokémon en paralelo utilizando CompletableFuture
+            List<CompletableFuture<Void>> futures = pokemons.stream()
+                    .map(pokemon -> CompletableFuture.runAsync(() -> pokemonRepository.save(pokemon), executor))
+                    .toList();
 
+            // Esperar a que todos los procesos terminen
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
             System.out.println("Guardado de Pokémon completado. Total guardados: " + pokemons.size());
         } catch (Exception e) {
             System.err.println("Error durante el guardado de Pokémon: " + e.getMessage());
@@ -46,27 +49,24 @@ public class PokeService {
         try {
             System.out.println("Iniciando sincronización de evoluciones...");
             List<Pokemon> pokemons = pokemonRepository.findAll(); // Obtener todos los Pokémon existentes
-            for (Pokemon pokemon : pokemons) {
-                String evolutionChainUrl = pokeApiClient.getEvolutionChainUrl(pokemon.getId());
-                try {
-                    List<Long> evolutionIds = pokeApiClient.getEvolutionIdsByUrl(evolutionChainUrl);
+            List<CompletableFuture<Void>> futures = pokemons.stream()
+                    .map(pokemon -> CompletableFuture.runAsync(() -> {
+                        try {
+                            String evolutionChainUrl = pokeApiClient.getEvolutionChainUrl(pokemon.getId());
+                            List<Long> evolutionIds = pokeApiClient.getEvolutionIdsByUrl(evolutionChainUrl);
 
-                    for (Long evolutionId : evolutionIds) {
-                        Pokemon evolution = pokemonRepository.findByIdWithEvolutions(evolutionId)
-                                .orElse(null);
-                        if (evolution != null) {
+                            // Relacionar las evoluciones encontradas
                             pokemon.setEvolutions(evolutionIds);
+                            pokemonRepository.save(pokemon);
+                        } catch (Exception e) {
+                            System.err.println("Error al procesar evoluciones para Pokémon: " + pokemon.getName());
+                            e.printStackTrace();
                         }
-                    }
+                    }, executor))
+                    .toList();
 
-                    // Guardar el Pokémon con sus evoluciones
-                    pokemonRepository.save(pokemon);
-                } catch (Exception e) {
-                    System.err.println("Error al procesar evoluciones para Pokémon: " + pokemon.getName());
-                    e.printStackTrace();
-                }
-            }
-
+            // Esperar a que todos los procesos terminen
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
             System.out.println("Sincronización de evoluciones completada.");
         } catch (Exception e) {
             System.err.println("Error durante la sincronización de evoluciones: " + e.getMessage());
@@ -74,11 +74,18 @@ public class PokeService {
         }
     }
 
-    // Metodo para guardar todo (Pokemon + Evoluciones)
+    // Metodo para guardar todos los datos
     public void saveAllData() {
+        long startTime = System.currentTimeMillis();
         System.out.println("Iniciando sincronización completa de datos...");
         saveAllPokemon();
         saveAllEvolutions();
+        long endTime = System.currentTimeMillis();
         System.out.println("Sincronización completa finalizada.");
+        System.out.println("Tiempo total: " + (endTime - startTime)/1000 + " s");
+    }
+    //
+    public void shutdownExecutor() {
+        executor.shutdown();
     }
 }
