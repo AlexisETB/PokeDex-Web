@@ -19,12 +19,12 @@ public class PokeApiClientTest {
             pokemonList.stream().limit(5).forEach(pokemon -> System.out.println("- " + pokemon.getName()));
 
             // Probar obtener una cadena de evoluciones (opcional)
-            String evolutionChainUrl = "https://pokeapi.co/api/v2/evolution-chain/1/";
-            List<Long> evolutionIds = pokeApiClient.getEvolutionChain(evolutionChainUrl);
+            String evolutionChainUrl = "https://pokeapi.co/api/v2/evolution-chain/2/";
+            List<Long> evolutionIds = pokeApiClient.getEvolutionIdsByUrl(evolutionChainUrl);
             System.out.println("\nEvolución IDs para la URL " + evolutionChainUrl + ": " + evolutionIds);
 
         } catch (Exception e) {
-            System.err.println("Ocurrió un error: " + e.getMessage());
+            System.err.println("Ocurri un error: " + e.getMessage());
         }
     }
    }

@@ -22,6 +22,9 @@ public class Pokemon {
     private double height;
     private double weight;
 
+    @ElementCollection
+    private List<Long> evolutions;
+
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Ability> abilities;
 
@@ -34,7 +37,5 @@ public class Pokemon {
     @Embedded
     private Sprites sprites;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Evolution> evolutions;
 
 }

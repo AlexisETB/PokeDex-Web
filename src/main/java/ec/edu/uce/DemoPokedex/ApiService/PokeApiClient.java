@@ -100,36 +100,56 @@ public class PokeApiClient {
         }
     }
 
-    public List<Long> getEvolutionChain(String evolutionChainUrl) {
-        List<Long> evolutionIds = new ArrayList<>();
+public String getEvolutionChainUrl(Long pokemonId) {
+    try {
+        String speciesUrl = BASE_URL + "pokemon-species/" + pokemonId + "/";
+        String response = restTemplate.getForObject(speciesUrl, String.class);
+
+        JsonNode root = objectMapper.readTree(response);
+        return root.get("evolution_chain").get("url").asText();
+    } catch (Exception e) {
+        throw new RuntimeException("Error fetching evolution chain URL for Pokémon ID: " + pokemonId, e);
+    }
+}
+
+    public List<Long> getEvolutionIdsByUrl(String url) {
         try {
-            JsonNode root = objectMapper.readTree(restTemplate.getForObject(evolutionChainUrl, String.class));
+            String response = restTemplate.getForObject(url, String.class);
+            JsonNode root = objectMapper.readTree(response);
             JsonNode chain = root.get("chain");
 
-            // Recorrer la cadena de evoluciones
-            while (chain != null) {
-                String speciesUrl = chain.get("species").get("url").asText();
-                Long id = extractIdFromUrl(speciesUrl);
-                evolutionIds.add(id);
+            List<Long> evolutionIds = new ArrayList<>();
+            extractEvolutionIds(chain, evolutionIds);
 
-                chain = chain.get("evolves_to").isEmpty() ? null : chain.get("evolves_to").get(0);
-            }
+            return evolutionIds;
         } catch (Exception e) {
-            throw new RuntimeException("Error al obtener la cadena de evoluciones: " + e.getMessage(), e);
+            throw new RuntimeException("Error fetching evolution IDs: " + e.getMessage(), e);
+        }
+    }
+
+    private void extractEvolutionIds(JsonNode chainNode, List<Long> evolutionIds) {
+        if (chainNode == null) return;
+
+        String speciesUrl = chainNode.get("species").get("url").asText();
+        Long speciesId = extractIdFromUrl(speciesUrl);
+        if (speciesId != null) {
+            evolutionIds.add(speciesId);
         }
 
-        return evolutionIds;
+        for (JsonNode next : chainNode.get("evolves_to")) {
+            extractEvolutionIds(next, evolutionIds);
+        }
     }
 
-    /**
-     * Extrae el ID de un Pokémon desde su URL.
-     * @param url URL del Pokémon o especie.
-     * @return ID del Pokémon.
-     */
     private Long extractIdFromUrl(String url) {
         String[] parts = url.split("/");
-        return Long.parseLong(parts[parts.length - 1]);
+        try {
+            return Long.parseLong(parts[parts.length - 1]);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
+
     private String getSpriteValue(JsonNode root, String spriteKey) {
         return root.get("sprites").has(spriteKey) && !root.get("sprites").get(spriteKey).isNull()
                 ? root.get("sprites").get(spriteKey).asText()

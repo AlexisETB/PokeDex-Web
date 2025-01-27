@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 
@@ -20,15 +21,7 @@ public class PokeService {
     @Autowired
     private PokemonRepository pokemonRepository;
 
-    @Autowired
-    private EvolutionRepository evolutionRepository;
-
-    @Autowired
-    private TypeRepository typeRepository;
-
-    @Autowired
-    private AbilityRepository abilityRepository;
-
+    private final ExecutorService executor = Executors.newFixedThreadPool(10);
 
     // Metodo para guardar todos los Pokémon desde la API
     public void saveAllPokemon() {
@@ -48,35 +41,44 @@ public class PokeService {
         }
     }
 
-//    // Metodo para guardar todas las evoluciones desde la API
-//    public void saveAllEvolutions() {
-//        try {
-//            System.out.println("Iniciando sincronización de evoluciones...");
-//            List<Pokemon> pokemons = pokemonRepository.findAll(); // Obtener todos los Pokémon existentes
-//
-//            for (Pokemon pokemon : pokemons) {
-//                try {
-//                    List<String> evolutionIds = pokeApiClient.getEvolutionIdsByPokemonId(pokemon.getId());
-//                    pokemon.setEvolutionIds(evolutionIds);
-//                    pokemonRepository.save(pokemon);
-//                } catch (Exception e) {
-//                    System.err.println("Error al procesar evoluciones para Pokémon: " + pokemon.getName());
-//                    e.printStackTrace();
-//                }
-//            }
-//
-//            System.out.println("Sincronización de evoluciones completada.");
-//        } catch (Exception e) {
-//            System.err.println("Error durante la sincronización de evoluciones: " + e.getMessage());
-//            e.printStackTrace();
-//        }
-//    }
-//
-//    // Metodo para guardar todo (Pokemon + Evoluciones)
-//    public void saveAllData() {
-//        System.out.println("Iniciando sincronización completa de datos...");
-//        saveAllPokemon();
-//        saveAllEvolutions();
-//        System.out.println("Sincronización completa finalizada.");
-//    }
+    // Metodo para guardar todas las evoluciones desde la API
+    public void saveAllEvolutions() {
+        try {
+            System.out.println("Iniciando sincronización de evoluciones...");
+            List<Pokemon> pokemons = pokemonRepository.findAll(); // Obtener todos los Pokémon existentes
+            for (Pokemon pokemon : pokemons) {
+                String evolutionChainUrl = pokeApiClient.getEvolutionChainUrl(pokemon.getId());
+                try {
+                    List<Long> evolutionIds = pokeApiClient.getEvolutionIdsByUrl(evolutionChainUrl);
+
+                    for (Long evolutionId : evolutionIds) {
+                        Pokemon evolution = pokemonRepository.findByIdWithEvolutions(evolutionId)
+                                .orElse(null);
+                        if (evolution != null) {
+                            pokemon.setEvolutions(evolutionIds);
+                        }
+                    }
+
+                    // Guardar el Pokémon con sus evoluciones
+                    pokemonRepository.save(pokemon);
+                } catch (Exception e) {
+                    System.err.println("Error al procesar evoluciones para Pokémon: " + pokemon.getName());
+                    e.printStackTrace();
+                }
+            }
+
+            System.out.println("Sincronización de evoluciones completada.");
+        } catch (Exception e) {
+            System.err.println("Error durante la sincronización de evoluciones: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // Metodo para guardar todo (Pokemon + Evoluciones)
+    public void saveAllData() {
+        System.out.println("Iniciando sincronización completa de datos...");
+        saveAllPokemon();
+        saveAllEvolutions();
+        System.out.println("Sincronización completa finalizada.");
+    }
 }
