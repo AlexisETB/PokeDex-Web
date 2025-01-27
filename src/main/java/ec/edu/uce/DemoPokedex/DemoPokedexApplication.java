@@ -9,7 +9,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 @SpringBootApplication
 public class DemoPokedexApplication {
 
-	private static ConfigurableApplicationContext context;
+	public static ConfigurableApplicationContext context;
 
 	public static void main(String[] args) {
 		context = SpringApplication.run(DemoPokedexApplication.class, args);

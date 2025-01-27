@@ -8,6 +8,7 @@ import ec.edu.uce.DemoPokedex.Services.PokemonService;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -21,6 +22,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static ec.edu.uce.DemoPokedex.DemoPokedexApplication.context;
 
 @Controller
 public class PokedexController {
@@ -317,8 +320,9 @@ public class PokedexController {
         try {
             for (Pokemon pokemon : listaPokemon) {
                 // Cargar el archivo FXML de la tarjeta de Pokémon
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/ec/edu/uce/DemoPokedex/View/pokemon.fxml"));
-                AnchorPane pokemonCard = loader.load();
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/View/pokemon.fxml"));
+                loader.setControllerFactory(context::getBean); // Configura Spring para manejar la inyección
+                AnchorPane pokemonCard = loader.load(); // Carga solo una vez
 
                 // Obtener el controlador de la tarjeta y pasar los datos del Pokémon
                 PokemonController pokemonController = loader.getController();
