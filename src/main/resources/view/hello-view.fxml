@@ -19,7 +19,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="900.0" prefWidth="1315.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="900.0" prefWidth="1315.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ec.edu.uce.DemoPokedex.Controller.PokedexController">
    <children>
       <BorderPane layoutX="27.0" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="27.0" AnchorPane.rightAnchor="-26.199999999999818" AnchorPane.topAnchor="0.0">
          <left>
@@ -48,7 +48,7 @@
                                     <Font name="Cambria" size="16.0" />
                                  </font>
                               </TextField>
-                              <Button fx:id="buscarNombrePokemon" mnemonicParsing="false" prefHeight="40.0" prefWidth="165.0" styleClass="search-button" stylesheets="@../model/style.css" text="Buscar" textFill="WHITE">
+                              <Button fx:id="buscarNombrePokemon" mnemonicParsing="false" onAction="#buscarPorNombre" prefHeight="40.0" prefWidth="165.0" styleClass="search-button" stylesheets="@../model/style.css" text="Buscar" textFill="WHITE">
                                  <HBox.margin>
                                     <Insets />
                                  </HBox.margin>
@@ -67,7 +67,7 @@
                                     <Font name="Cambria" size="16.0" />
                                  </font>
                               </TextField>
-                              <Button fx:id="buscarNumeroPokemon" mnemonicParsing="false" prefHeight="40.0" prefWidth="164.0" styleClass="search-button" stylesheets="@../model/style.css" text="Buscar" textFill="WHITE">
+                              <Button fx:id="buscarNumeroPokemon" mnemonicParsing="false" onAction="#buscarPorNumero" prefHeight="40.0" prefWidth="164.0" styleClass="search-button" stylesheets="@../model/style.css" text="Buscar" textFill="WHITE">
                                  <HBox.margin>
                                     <Insets />
                                  </HBox.margin>
@@ -461,7 +461,7 @@
                               <Image url="@../images/pokeball_PNG29.png" />
                            </image>
                         </ImageView>
-                        <Button fx:id="cargarDatosPokeApi" mnemonicParsing="false" styleClass="add-btn" stylesheets="@../values/styles.css" text="Cargar Data" textFill="#4d4949">
+                        <Button fx:id="cargarDatosPokeApi" mnemonicParsing="false" onAction="#cargarDatos" styleClass="add-btn" stylesheets="@../values/styles.css" text="Cargar Data" textFill="#4d4949">
                            <font>
                               <Font name="Cambria Bold" size="18.0" />
                            </font>

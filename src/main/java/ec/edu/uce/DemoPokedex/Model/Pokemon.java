@@ -25,13 +25,13 @@ public class Pokemon {
     @ElementCollection
     private List<Long> evolutions;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
     private List<Ability> abilities;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Stat> stats;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Type> types;
 
     @Embedded

@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface AbilityRepository extends JpaRepository<Ability, Long> {
     Optional<Ability> findByName(String name);
+
 }

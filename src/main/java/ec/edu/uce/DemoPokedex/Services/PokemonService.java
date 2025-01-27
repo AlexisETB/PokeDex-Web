@@ -2,6 +2,7 @@ package ec.edu.uce.DemoPokedex.Services;
 
 import ec.edu.uce.DemoPokedex.Model.Pokemon;
 import ec.edu.uce.DemoPokedex.Repository.PokemonRepository;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,12 +24,16 @@ public class PokemonService {
     // Obtener Pokémon por ID
     @Transactional(readOnly = true)
     public Optional<Pokemon> getPokemonById(Long id) {
+        Pokemon pokemon = pokemonRepository.findById(id).orElse(null);
+        Hibernate.initialize(pokemon.getStats());
         return pokemonRepository.findById(id);
     }
 
     // Obtener Pokémon por nombre
     @Transactional(readOnly = true)
     public List<Pokemon> getPokemonByName(String name) {
+        Pokemon pokemon = pokemonRepository.findByNameIgnoreCase(name).get(0);
+        Hibernate.initialize(pokemon.getStats());
         return pokemonRepository.findByNameIgnoreCase(name);
     }
 

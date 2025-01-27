@@ -1,23 +1,31 @@
 package ec.edu.uce.DemoPokedex.Controller;
 
 import ec.edu.uce.DemoPokedex.ApiService.PokeService;
+import ec.edu.uce.DemoPokedex.Model.Ability;
 import ec.edu.uce.DemoPokedex.Model.Pokemon;
+import ec.edu.uce.DemoPokedex.Model.Type;
 import ec.edu.uce.DemoPokedex.Services.PokemonService;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
 
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+@Controller
 public class PokedexController {
 
+    @Autowired
     private PokemonService pokemonService;
 
+    @Autowired
     private PokeService pokeService;
 
     @FXML
@@ -72,7 +80,7 @@ public class PokedexController {
     private GridPane gridPanePokemon;
 
     @FXML
-    private ComboBox<?> habilidad;
+    private ComboBox<String> habilidad;
 
     @FXML
     private ImageView imagenEvo1;
@@ -120,8 +128,18 @@ public class PokedexController {
     private Label tipoEvo3;
 
     @FXML
-    private void buscarPorNombre()  {
-        String nombre = escNombrePokemon.getText();
+    private void buscarPorNombre(ActionEvent event)  {
+        String nombre = escNombrePokemon.getText().trim();
+
+        if (nombre.isEmpty()) {
+            mostrarMensaje("Por favor, ingrese un nombre.");
+            return;
+        }
+        if (!nombre.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+")) {
+            mostrarMensaje("El nombre no debe contener números ni caracteres especiales.");
+            return;
+        }
+
         List<Pokemon> pokemons = pokemonService.getPokemonByName(nombre);
 
         if (!pokemons.isEmpty()) {
@@ -130,10 +148,11 @@ public class PokedexController {
         } else {
             mostrarMensaje("No se encontró ningún Pokémon con el nombre: " + nombre);
         }
+
     }
 
     @FXML
-    private void buscarPorNumero()  {
+    private void buscarPorNumero(ActionEvent event)  {
         try {
             Long id = Long.parseLong(escNumeroPokemon.getText());
             Optional<Pokemon> optionalPokemon = pokemonService.getPokemonById(id);
@@ -149,7 +168,7 @@ public class PokedexController {
     }
 
     @FXML
-    private void cargarDatos()  {
+    private void cargarDatos(ActionEvent event)  {
         try {
             pokeService.saveAllData();
             mostrarMensaje("Datos cargados exitosamente desde la API.");
@@ -189,10 +208,52 @@ public class PokedexController {
     }
     private void mostrarPokemonData(Pokemon pokemon) {
         nombreNumeroPokemon.setText(pokemon.getName() + " (#" + pokemon.getId() + ")");
-        ps.setText(String.valueOf(pokemon.getBase_experience()));
-        altura.setText(String.valueOf(pokemon.getHeight()));
-        peso.setText(String.valueOf(pokemon.getWeight()));
-        categoria.setText("Categoría Pokémon");
+
+        if (pokemon.getStats() != null && pokemon.getStats().size() >= 6) {
+            ps.setText(String.valueOf(pokemon.getStats().get(0).getBaseStat()));
+            ataque.setText(String.valueOf(pokemon.getStats().get(1).getBaseStat()));
+            defensa.setText(String.valueOf(pokemon.getStats().get(2).getBaseStat()));
+            ataqueEsp.setText(String.valueOf(pokemon.getStats().get(3).getBaseStat()));
+            DefensaEsp.setText(String.valueOf(pokemon.getStats().get(4).getBaseStat()));
+            Velocidad.setText(String.valueOf(pokemon.getStats().get(5).getBaseStat()));
+        } else {
+            ps.setText("-");
+            ataque.setText("-");
+            defensa.setText("-");
+            ataqueEsp.setText("-");
+            DefensaEsp.setText("-");
+            Velocidad.setText("-");
+        }
+
+        // Altura y peso
+        altura.setText(String.valueOf(pokemon.getHeight() / 10.0) + "m");
+        peso.setText(String.valueOf(pokemon.getWeight() / 10.0) + "kg");
+
+        List<Type> types = pokemon.getTypes();
+        if (types != null && !types.isEmpty()) {
+            // Concatenar nombres de los tipos separados por comas
+            String tiposConcatenados = types.stream()
+                    .map(Type::getName) // Obtener el nombre de cada tipo
+                    .collect(Collectors.joining(", ")); // Unirlos con comas
+            tipo.setText(tiposConcatenados);
+        } else {
+            tipo.setText("N/A"); // Si no hay tipos, mostrar "N/A"
+        }
+
+        // Llenar el ComboBox de habilidades
+        List<Ability> abilities = pokemon.getAbilities();
+        if (abilities != null && !abilities.isEmpty()) {
+            // Obtener los nombres de las habilidades y añadirlos al ComboBox
+            habilidad.getItems().clear(); // Limpiar el ComboBox
+            abilities.forEach(ability -> habilidad.getItems().add(ability.getName()));
+            // Seleccionar la primera habilidad como predeterminada
+            habilidad.getSelectionModel().selectFirst();
+        } else {
+            habilidad.getItems().clear();
+            habilidad.getItems().add("Sin habilidades");
+            habilidad.getSelectionModel().selectFirst();
+        }
+
 
         // Cargamos el sprite
         pokemonService.getSpriteById(pokemon.getId()).ifPresent(spriteUrl -> {
