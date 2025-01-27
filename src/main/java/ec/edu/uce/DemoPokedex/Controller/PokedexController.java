@@ -7,14 +7,17 @@ import ec.edu.uce.DemoPokedex.Model.Type;
 import ec.edu.uce.DemoPokedex.Services.PokemonService;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -172,6 +175,8 @@ public class PokedexController {
         try {
             pokeService.saveAllData();
             mostrarMensaje("Datos cargados exitosamente desde la API.");
+
+            mostrarTodosLosPokemon();
         } catch (Exception e) {
             mostrarMensaje("Ocurrió un error al cargar los datos: " + e.getMessage());
         }
@@ -296,6 +301,42 @@ public class PokedexController {
                     imagenEvo3.setImage(new Image(evolucion.getSprites().getFrontDefault()));
                 }
             }
+        }
+    }
+    public void mostrarTodosLosPokemon() {
+        // Obtener la lista de Pokémon ordenada por ID
+        List<Pokemon> listaPokemon = pokemonService.getAllPokemon();
+
+        // Limpiar el GridPane antes de agregar nuevas tarjetas
+        gridPanePokemon.getChildren().clear();
+
+        int columnas = 3; // Número de columnas
+        int fila = 0;
+        int columna = 0;
+
+        try {
+            for (Pokemon pokemon : listaPokemon) {
+                // Cargar el archivo FXML de la tarjeta de Pokémon
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/ec/edu/uce/DemoPokedex/View/pokemon.fxml"));
+                AnchorPane pokemonCard = loader.load();
+
+                // Obtener el controlador de la tarjeta y pasar los datos del Pokémon
+                PokemonController pokemonController = loader.getController();
+                pokemonController.mostrarPokemonData(pokemon);
+
+                // Agregar la tarjeta al GridPane
+                gridPanePokemon.add(pokemonCard, columna, fila);
+
+                // Controlar la disposición de columnas y filas
+                columna++;
+                if (columna == columnas) {
+                    columna = 0;
+                    fila++;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostrarMensaje("Error al cargar las tarjetas de Pokémon.");
         }
     }
 

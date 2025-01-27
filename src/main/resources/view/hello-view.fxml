@@ -385,7 +385,7 @@
                                     </HBox>
                                     <HBox alignment="CENTER" prefHeight="26.0" prefWidth="200.0">
                                        <children>
-                                          <Label fx:id="nombreEvo2" alignment="CENTER" contentDisplay="CENTER" text="Picachu Nro. 0025 ">
+                                          <Label fx:id="nombreEvo2" alignment="CENTER" contentDisplay="CENTER" text="null">
                                              <font>
                                                 <Font name="Yu Gothic UI Bold" size="12.0" />
                                              </font>
@@ -394,7 +394,7 @@
                                     </HBox>
                                     <HBox alignment="CENTER" prefHeight="30.0" prefWidth="200.0">
                                        <children>
-                                          <Label fx:id="tipoEvo2" text="Eléctrico">
+                                          <Label fx:id="tipoEvo2" text="null">
                                              <font>
                                                 <Font name="Tahoma" size="12.0" />
                                              </font>
@@ -424,7 +424,7 @@
                                     </HBox>
                                     <HBox alignment="CENTER" prefHeight="26.0" prefWidth="200.0">
                                        <children>
-                                          <Label fx:id="nombreEvo3" alignment="CENTER" contentDisplay="CENTER" text="Raichu Nro. 0026">
+                                          <Label fx:id="nombreEvo3" alignment="CENTER" contentDisplay="CENTER" text="null">
                                              <font>
                                                 <Font name="Yu Gothic UI Bold" size="12.0" />
                                              </font>
@@ -433,7 +433,7 @@
                                     </HBox>
                                     <HBox alignment="CENTER" prefHeight="30.0" prefWidth="200.0">
                                        <children>
-                                          <Label fx:id="tipoEvo3" text="Eléctrico">
+                                          <Label fx:id="tipoEvo3" text="null">
                                              <font>
                                                 <Font name="Tahoma" size="12.0" />
                                              </font>
