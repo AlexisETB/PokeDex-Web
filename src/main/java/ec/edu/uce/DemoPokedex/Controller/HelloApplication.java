@@ -28,7 +28,7 @@ public class HelloApplication extends Application {
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/view/hello-view.fxml"));
 
-        // Si usas controladores gestionados por Spring, configúralos así:
+        //controladores gestionados por Spring, configuración:
         fxmlLoader.setControllerFactory(springContext::getBean);
 
         Scene scene = new Scene(fxmlLoader.load(), 320, 240);

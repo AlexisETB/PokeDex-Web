@@ -44,16 +44,16 @@ public class PokemonController {
         nombrePokemonCard.setText(pokemon.getName() + " (#" + pokemon.getId() + ")");
         numeroPokemon.setText("Nro "+pokemon.getId());
 
-//        List<Type> types = pokemon.getTypes();
-//        if (types != null && !types.isEmpty()) {
-//            // Concatenar nombres de los tipos separados por comas
-//            String tiposConcatenados = types.stream()
-//                    .map(Type::getName) // Obtener el nombre de cada tipo
-//                    .collect(Collectors.joining(", ")); // Unirlos con comas
-//            tipoPokemonCard.setText(tiposConcatenados);
-//        } else {
-//            tipoPokemonCard.setText("N/A"); // Si no hay tipos, mostrar "N/A"
-//        }
+        List<Type> types = pokemon.getTypes();
+        if (types != null && !types.isEmpty()) {
+            // Concatenar nombres de los tipos separados por comas
+            String tiposConcatenados = types.stream()
+                    .map(Type::getName) // Obtener el nombre de cada tipo
+                    .collect(Collectors.joining(", ")); // Unirlos con comas
+            tipoPokemonCard.setText(tiposConcatenados);
+        } else {
+            tipoPokemonCard.setText("N/A"); // Si no hay tipos, mostrar "N/A"
+        }
 
 
         // Cargamos el sprite

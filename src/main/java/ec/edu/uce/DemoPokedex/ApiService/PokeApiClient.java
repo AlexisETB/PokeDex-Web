@@ -39,14 +39,6 @@ public class PokeApiClient {
 
             JsonNode results = root.get("results");
 
-//            // Iterar sobre cada Pokémon en la lista y obtener sus datos completos
-//            if (results != null) {
-//                for (JsonNode pokemonNode : results) {
-//                    String pokemonUrl = pokemonNode.get("url").asText();
-//                    Pokemon pokemon = getPokemonByUrl(pokemonUrl);
-//                    pokemonList.add(pokemon);
-//                }
-//            }
             // Procesar URLs en paralelo con CompletableFuture
             List<CompletableFuture<Pokemon>> futures = new ArrayList<>();
             for (JsonNode pokemonNode : results) {
@@ -65,7 +57,6 @@ public class PokeApiClient {
         } catch (Exception e) {
             throw new RuntimeException("Error al obtener los datos de los Pokémon: " + e.getMessage(), e);
         }
-
         //return pokemonList;
     }
 

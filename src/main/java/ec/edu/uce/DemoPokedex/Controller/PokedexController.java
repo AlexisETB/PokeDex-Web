@@ -3,6 +3,7 @@ package ec.edu.uce.DemoPokedex.Controller;
 import ec.edu.uce.DemoPokedex.ApiService.PokeService;
 import ec.edu.uce.DemoPokedex.Model.Ability;
 import ec.edu.uce.DemoPokedex.Model.Pokemon;
+import ec.edu.uce.DemoPokedex.Model.Stat;
 import ec.edu.uce.DemoPokedex.Model.Type;
 import ec.edu.uce.DemoPokedex.Services.PokemonService;
 import javafx.event.ActionEvent;
@@ -10,18 +11,28 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
 
+import java.awt.*;
+import javafx.geometry.Insets;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static ec.edu.uce.DemoPokedex.DemoPokedexApplication.context;
 
@@ -134,43 +145,47 @@ public class PokedexController {
     private Label tipoEvo3;
 
     @FXML
-    private void buscarPorNombre(ActionEvent event)  {
+    private void buscarPorNombre(ActionEvent event) {
         String nombre = escNombrePokemon.getText().trim();
 
-        if (nombre.isEmpty()) {
-            mostrarMensaje("Por favor, ingrese un nombre.");
-            return;
-        }
-        if (!nombre.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+")) {
-            mostrarMensaje("El nombre no debe contener números ni caracteres especiales.");
-            return;
-        }
-
-        List<Pokemon> pokemons = pokemonService.getPokemonByName(nombre);
-
-        if (!pokemons.isEmpty()) {
-            Pokemon pokemon = pokemons.get(0); // Mostramos el primero encontrado
-            mostrarPokemonData(pokemon);
-        } else {
-            mostrarMensaje("No se encontró ningún Pokémon con el nombre: " + nombre);
-        }
-
+        Optional.ofNullable(nombre)
+                .filter(n -> !n.isEmpty())
+                .ifPresentOrElse(
+                        n -> {
+                            if (!n.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+")) {
+                                mostrarMensaje("El nombre no debe contener números ni caracteres especiales.");
+                            } else {
+                                pokemonService.getPokemonByName(n)
+                                        .stream()
+                                        .findFirst()
+                                        .ifPresentOrElse(
+                                                this::mostrarPokemonData,
+                                                () -> mostrarMensaje("No se encontró ningún Pokémon con el nombre: " + n)
+                                        );
+                            }
+                        },
+                        () -> mostrarMensaje("Por favor, ingrese un nombre.")
+                );
     }
 
     @FXML
-    private void buscarPorNumero(ActionEvent event)  {
-        try {
-            Long id = Long.parseLong(escNumeroPokemon.getText());
-            Optional<Pokemon> optionalPokemon = pokemonService.getPokemonById(id);
-
-            if (optionalPokemon.isPresent()) {
-                mostrarPokemonData(optionalPokemon.get());
-            } else {
-                mostrarMensaje("No se encontró ningún Pokémon con el ID: " + id);
-            }
-        } catch (NumberFormatException e) {
-            mostrarMensaje("El ID ingresado no es válido.");
-        }
+    private void buscarPorNumero(ActionEvent event) {
+        Optional.ofNullable(escNumeroPokemon.getText()) // Convertir el texto en un Optional
+                .map(String::trim) // Eliminar espacios en blanco
+                .filter(text -> !text.isEmpty()) // Filtrar si el texto no está vacío
+                .flatMap(text -> { // Convertir el texto a Long y buscar el Pokémon
+                    try {
+                        Long id = Long.parseLong(text);
+                        return pokemonService.getPokemonById(id);
+                    } catch (NumberFormatException e) {
+                        mostrarMensaje("El ID ingresado no es válido.");
+                        return Optional.empty();
+                    }
+                })
+                .ifPresentOrElse(
+                        this::mostrarPokemonData, // Si el Pokémon está presente, mostrar sus datos
+                        () -> mostrarMensaje("No se encontró ningún Pokémon con el ID ingresado.") // Si no, mostrar mensaje de error
+                );
     }
 
     @FXML
@@ -197,150 +212,172 @@ public class PokedexController {
 
     @FXML
     private void mostrarEvoluciones(Long pokemonId) {
+        limpiarDatosEvoluciones();
         List<Long> evolucionesIds = pokemonService.getEvolutionsById(pokemonId);
 
-        // Verificamos las evoluciones y mostramos información
         if (evolucionesIds.isEmpty()) {
             mostrarMensaje("Este Pokémon no tiene evoluciones.");
             return;
         }
 
-        for (int i = 0; i < evolucionesIds.size(); i++) {
-            Optional<Pokemon> evolucion = pokemonService.getPokemonById(evolucionesIds.get(i));
-            if (evolucion.isPresent()) {
-                mostrarEvolucionData(i + 1, evolucion.get());
-            } else {
-                mostrarEvolucionData(i + 1, null); // Si no existe, mostramos vacío
-            }
-        }
+        // Usamos un Stream sobre la lista de IDs
+        evolucionesIds.stream()
+                .map(id -> pokemonService.getPokemonById(id))
+                .forEach(optionalPokemon -> {
+                    int index = evolucionesIds.indexOf(optionalPokemon.map(Pokemon::getId).orElse(null)) + 1;
+                    optionalPokemon.ifPresentOrElse(
+                            pokemon -> mostrarEvolucionData(index, pokemon),
+                            () -> mostrarEvolucionData(index, null)
+                    );
+                });
     }
+
     private void mostrarPokemonData(Pokemon pokemon) {
+        // 1. Mostrar nombre y número del Pokémon
         nombreNumeroPokemon.setText(pokemon.getName() + " (#" + pokemon.getId() + ")");
 
-        if (pokemon.getStats() != null && pokemon.getStats().size() >= 6) {
-            ps.setText(String.valueOf(pokemon.getStats().get(0).getBaseStat()));
-            ataque.setText(String.valueOf(pokemon.getStats().get(1).getBaseStat()));
-            defensa.setText(String.valueOf(pokemon.getStats().get(2).getBaseStat()));
-            ataqueEsp.setText(String.valueOf(pokemon.getStats().get(3).getBaseStat()));
-            DefensaEsp.setText(String.valueOf(pokemon.getStats().get(4).getBaseStat()));
-            Velocidad.setText(String.valueOf(pokemon.getStats().get(5).getBaseStat()));
-        } else {
-            ps.setText("-");
-            ataque.setText("-");
-            defensa.setText("-");
-            ataqueEsp.setText("-");
-            DefensaEsp.setText("-");
-            Velocidad.setText("-");
-        }
+        // 2. Mostrar estadísticas del Pokémon
+        mostrarEstadisticas(pokemon.getStats());
 
-        // Altura y peso
-        altura.setText(String.valueOf(pokemon.getHeight() / 10.0) + "m");
-        peso.setText(String.valueOf(pokemon.getWeight() / 10.0) + "kg");
+        // 3. Mostrar altura y peso
+        altura.setText(String.format("%.1fm", pokemon.getHeight() / 10.0));
+        peso.setText(String.format("%.1fkg", pokemon.getWeight() / 10.0));
 
-        List<Type> types = pokemon.getTypes();
-        if (types != null && !types.isEmpty()) {
-            // Concatenar nombres de los tipos separados por comas
-            String tiposConcatenados = types.stream()
-                    .map(Type::getName) // Obtener el nombre de cada tipo
-                    .collect(Collectors.joining(", ")); // Unirlos con comas
-            tipo.setText(tiposConcatenados);
-        } else {
-            tipo.setText("N/A"); // Si no hay tipos, mostrar "N/A"
-        }
+        // 4. Mostrar tipos del Pokémon
+        tipo.setText(Optional.ofNullable(pokemon.getTypes())
+                .filter(types -> !types.isEmpty())
+                .map(types -> types.stream()
+                        .map(Type::getName)
+                        .collect(Collectors.joining(", ")))
+                .orElse("N/A"));
 
-        // Llenar el ComboBox de habilidades
-        List<Ability> abilities = pokemon.getAbilities();
-        if (abilities != null && !abilities.isEmpty()) {
-            // Obtener los nombres de las habilidades y añadirlos al ComboBox
-            habilidad.getItems().clear(); // Limpiar el ComboBox
-            abilities.forEach(ability -> habilidad.getItems().add(ability.getName()));
-            // Seleccionar la primera habilidad como predeterminada
-            habilidad.getSelectionModel().selectFirst();
-        } else {
-            habilidad.getItems().clear();
-            habilidad.getItems().add("Sin habilidades");
-            habilidad.getSelectionModel().selectFirst();
-        }
+        // 5. Llenar el ComboBox de habilidades
+        Optional.ofNullable(pokemon.getAbilities())
+                .ifPresentOrElse(
+                        abilities -> {
+                            habilidad.getItems().clear();
+                            abilities.stream()
+                                    .map(Ability::getName)
+                                    .forEach(habilidad.getItems()::add);
+                            habilidad.getSelectionModel().selectFirst();
+                        },
+                        () -> {
+                            habilidad.getItems().clear();
+                            habilidad.getItems().add("Sin habilidades");
+                            habilidad.getSelectionModel().selectFirst();
+                        });
 
+        // 6. Cargar el sprite del Pokémon
+        pokemonService.getSpriteById(pokemon.getId())
+                .ifPresent(spriteUrl -> imagenPokemon.setImage(new Image(spriteUrl)));
 
-        // Cargamos el sprite
-        pokemonService.getSpriteById(pokemon.getId()).ifPresent(spriteUrl -> {
-
-            imagenPokemon.setImage(new Image(spriteUrl));
-        });
-
-        // Mostramos evoluciones
+        // 7. Mostrar evoluciones del Pokémon
         mostrarEvoluciones(pokemon.getId());
     }
 
+    private void mostrarEstadisticas(List<Stat> stats) {
+        Map<Integer, Label> estadisticasMap = Map.of(
+                0, ps,
+                1, ataque,
+                2, defensa,
+                3, ataqueEsp,
+                4, DefensaEsp,
+                5, Velocidad
+        );
+
+        // Si las estadísticas son válidas, las mostramos; de lo contrario, mostramos "-"
+        IntStream.range(0, estadisticasMap.size())
+                .forEach(index -> estadisticasMap.get(index).setText(
+                        Optional.ofNullable(stats)
+                                .filter(s -> s.size() > index)
+                                .map(s -> String.valueOf(s.get(index).getBaseStat()))
+                                .orElse("-")
+                ));
+    }
+
     private void mostrarEvolucionData(int index, Pokemon evolucion) {
+        // Definimos arreglos para los componentes de la interfaz
+        Label[] nombreEvoLabels = {nombreEvo1, nombreEvo2, nombreEvo3};
+        ImageView[] imagenEvoViews = {imagenEvo1, imagenEvo2, imagenEvo3};
+
+        // Validamos que el índice esté dentro del rango válido
+        if (index < 1 || index > 3) {
+            throw new IllegalArgumentException("Índice de evolución no válido: " + index);
+        }
+
+        // Obtenemos los componentes correspondientes al índice
+        Label nombreLabel = nombreEvoLabels[index - 1];
+        ImageView imagenView = imagenEvoViews[index - 1];
+
+        // Actualizamos los componentes según si la evolución es nula o no
         if (evolucion == null) {
-            switch (index) {
-                case 1 -> {
-                    nombreEvo1.setText("N/A");
-                    imagenEvo1.setImage(null);
-                }
-                case 2 -> {
-                    nombreEvo2.setText("N/A");
-                    imagenEvo2.setImage(null);
-                }
-                case 3 -> {
-                    nombreEvo3.setText("N/A");
-                    imagenEvo3.setImage(null);
-                }
-            }
+            nombreLabel.setText("N/A");
+            imagenView.setImage(null);
         } else {
-            switch (index) {
-                case 1 -> {
-                    nombreEvo1.setText(evolucion.getName());
-                    imagenEvo1.setImage(new Image(evolucion.getSprites().getFrontDefault()));
-                }
-                case 2 -> {
-                    nombreEvo2.setText(evolucion.getName());
-                    imagenEvo2.setImage(new Image(evolucion.getSprites().getFrontDefault()));
-                }
-                case 3 -> {
-                    nombreEvo3.setText(evolucion.getName());
-                    imagenEvo3.setImage(new Image(evolucion.getSprites().getFrontDefault()));
-                }
-            }
+            nombreLabel.setText(evolucion.getName());
+            imagenView.setImage(new Image(evolucion.getSprites().getFrontDefault()));
         }
     }
-    public void mostrarTodosLosPokemon() {
-        // Obtener la lista de Pokémon ordenada por ID
-        List<Pokemon> listaPokemon = pokemonService.getAllPokemon();
 
-        // Limpiar el GridPane antes de agregar nuevas tarjetas
-        gridPanePokemon.getChildren().clear();
+    private void limpiarDatosEvoluciones() {
+        nombreEvo1.setText("");
+        nombreEvo2.setText("");
+        nombreEvo3.setText("");
 
-        int columnas = 3; // Número de columnas
-        int fila = 0;
-        int columna = 0;
+        imagenEvo1.setImage(null);
+        imagenEvo2.setImage(null);
+        imagenEvo3.setImage(null);
+    }
 
-        try {
-            for (Pokemon pokemon : listaPokemon) {
-                // Cargar el archivo FXML de la tarjeta de Pokémon
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/View/pokemon.fxml"));
-                loader.setControllerFactory(context::getBean); // Configura Spring para manejar la inyección
-                AnchorPane pokemonCard = loader.load(); // Carga solo una vez
 
-                // Obtener el controlador de la tarjeta y pasar los datos del Pokémon
-                PokemonController pokemonController = loader.getController();
-                pokemonController.mostrarPokemonData(pokemon);
+    private void mostrarTodosLosPokemon() {
+        List<Pokemon> pokemons = pokemonService.getAllPokemon().stream()
+                .sorted(Comparator.comparing(Pokemon::getId))
+                .collect(Collectors.toList());
 
-                // Agregar la tarjeta al GridPane
-                gridPanePokemon.add(pokemonCard, columna, fila);
+        VBox contenedorTarjetas = new VBox();
+        contenedorTarjetas.setSpacing(10);
+        contenedorTarjetas.setPadding(new Insets(10));
 
-                // Controlar la disposición de columnas y filas
-                columna++;
-                if (columna == columnas) {
-                    columna = 0;
-                    fila++;
-                }
+        for (Pokemon pokemon : pokemons) {
+            AnchorPane tarjeta = cargarTarjetaPokemon();
+            if (tarjeta != null) {
+                actualizarTarjetaPokemon(tarjeta, pokemon);
+                contenedorTarjetas.getChildren().add(tarjeta);
             }
+        }
+
+        scrollPanePokemon.setContent(contenedorTarjetas);
+    }
+
+    private AnchorPane cargarTarjetaPokemon() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/pokemon.fxml"));
+            return loader.load();
         } catch (IOException e) {
             e.printStackTrace();
-            mostrarMensaje("Error al cargar las tarjetas de Pokémon.");
+            return null;
+        }
+    }
+
+
+    private void actualizarTarjetaPokemon(AnchorPane tarjeta, Pokemon pokemon) {
+        ImageView imagenPokemonCard = (ImageView) tarjeta.lookup("#imagenPokemonCard");
+        Label numeroPokemon = (Label) tarjeta.lookup("#numeroPokemon");
+        Label nombrePokemonCard = (Label) tarjeta.lookup("#nombrePokemonCard");
+        Label tipoPokemonCard = (Label) tarjeta.lookup("#tipoPokemonCard");
+
+        numeroPokemon.setText("Nro " + String.format("%03d", pokemon.getId()));
+        nombrePokemonCard.setText(pokemon.getName());
+
+        String tiposConcatenados = pokemon.getTypes().stream()
+                .map(Type::getName)
+                .collect(Collectors.joining(", "));
+        tipoPokemonCard.setText(tiposConcatenados);
+
+        String spriteUrl = pokemon.getSprites().getFrontDefault();
+        if (spriteUrl != null) {
+            imagenPokemonCard.setImage(new Image(spriteUrl));
         }
     }
 
