@@ -1,7 +1,9 @@
 package ec.edu.uce.DemoPokedex.Services;
 
 import ec.edu.uce.DemoPokedex.Model.Pokemon;
+import ec.edu.uce.DemoPokedex.Model.Type;
 import ec.edu.uce.DemoPokedex.Repository.PokemonRepository;
+import ec.edu.uce.DemoPokedex.Repository.TypeRepository;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,7 @@ import java.util.Optional;
 public class PokemonService {
     @Autowired
     private PokemonRepository pokemonRepository;
+
 
     // Obtener todos los Pokémon
     @Transactional(readOnly = true)
@@ -65,4 +68,6 @@ public class PokemonService {
     public List<Pokemon> findAllWithTypesAndAbilities(){
         return pokemonRepository.findAllWithTypesAndAbilities();
     }
+
+
 }

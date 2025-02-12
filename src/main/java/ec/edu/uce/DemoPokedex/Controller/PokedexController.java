@@ -194,7 +194,8 @@ public class PokedexController {
             pokeService.saveAllData();
             mostrarMensaje("Datos cargados exitosamente desde la API.");
 
-            //mostrarTodosLosPokemon();
+            mostrarTodosLosPokemon();
+            System.out.println("Datos cargados exitosamente");
         } catch (Exception e) {
             mostrarMensaje("Ocurrió un error al cargar los datos: " + e.getMessage());
         }
@@ -335,19 +336,32 @@ public class PokedexController {
                 .sorted(Comparator.comparing(Pokemon::getId))
                 .collect(Collectors.toList());
 
-        VBox contenedorTarjetas = new VBox();
-        contenedorTarjetas.setSpacing(10);
-        contenedorTarjetas.setPadding(new Insets(10));
+        gridPanePokemon.getChildren().clear(); // Limpiar el GridPane
+
+        gridPanePokemon.setHgap(20);
+        gridPanePokemon.setVgap(20);
+
+        int columnas = 3; // Número de columnas en el GridPane
+        int fila = 0;
+        int columna = 1;
 
         for (Pokemon pokemon : pokemons) {
             AnchorPane tarjeta = cargarTarjetaPokemon();
             if (tarjeta != null) {
                 actualizarTarjetaPokemon(tarjeta, pokemon);
-                contenedorTarjetas.getChildren().add(tarjeta);
+                gridPanePokemon.add(tarjeta, columna, fila);
+
+                tarjeta.setOnMouseClicked(event -> mostrarPokemonData(pokemon));
+
+                columna++;
+                if (columna > columnas) {
+                    columna = 1;
+                    fila++;
+                }
             }
         }
 
-        scrollPanePokemon.setContent(contenedorTarjetas);
+        scrollPanePokemon.setContent(gridPanePokemon);
     }
 
     private AnchorPane cargarTarjetaPokemon() {
@@ -359,7 +373,6 @@ public class PokedexController {
             return null;
         }
     }
-
 
     private void actualizarTarjetaPokemon(AnchorPane tarjeta, Pokemon pokemon) {
         ImageView imagenPokemonCard = (ImageView) tarjeta.lookup("#imagenPokemonCard");
