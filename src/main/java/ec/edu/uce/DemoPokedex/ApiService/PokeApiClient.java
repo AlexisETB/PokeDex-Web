@@ -3,142 +3,124 @@ package ec.edu.uce.DemoPokedex.ApiService;
 import com.fasterxml.jackson.databind.JsonNode;
 import ec.edu.uce.DemoPokedex.Model.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 @Service
 public class PokeApiClient {
 
-    private final RestTemplate restTemplate;
+    private final WebClient webClient;
     private final ObjectMapper objectMapper;
     private static final String BASE_URL = "https://pokeapi.co/api/v2/";
-    private final ExecutorService executor = Executors.newFixedThreadPool(15);
 
-    public PokeApiClient() {
-        this.restTemplate = new RestTemplate();
+    public PokeApiClient(WebClient.Builder webClientBuilder) {
+       this.webClient = webClientBuilder.baseUrl(BASE_URL).build();
         this.objectMapper = new ObjectMapper();
     }
 
-    public CompletableFuture<List<Pokemon>> getAllPokemon() {
-        List<Pokemon> pokemonList = new ArrayList<>();
-        String url = BASE_URL + "pokemon?limit=1025&offset=0";
-
-        return CompletableFuture.supplyAsync(() -> {
-            List<CompletableFuture<Pokemon>> futures = new ArrayList<>();
-            try {
-                // Obtener la lista inicial de Pokémon (IDs y nombres)
-                String response = restTemplate.getForObject(url, String.class);
-                JsonNode root = objectMapper.readTree(response);
-                JsonNode results = root.get("results");
-
-                // Procesar URLs en paralelo con CompletableFuture
-                for (JsonNode pokemonNode : results) {
+    public Flux<Pokemon> getAllPokemon() {
+        return webClient.get()
+                .uri("pokemon?limit=1025&offset=0")
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .flatMapMany(root -> {
+                    JsonNode results = root.get("results");
+                    List<JsonNode> pokemonNodes = new ArrayList<>();
+                    results.forEach(pokemonNodes::add);
+                    return Flux.fromIterable(pokemonNodes);
+                })
+                .flatMap(pokemonNode -> {
                     String pokemonUrl = pokemonNode.get("url").asText();
-                    CompletableFuture<Pokemon> future = CompletableFuture.supplyAsync(
-                            () -> getPokemonByUrl(pokemonUrl),
-                            executor
-                    );
-                    futures.add(future);
-                }
-
-                // Esperar a que todos los procesos terminen y recopilar los resultados
-                return futures.stream()
-                        .map(CompletableFuture::join)
-                        .collect(Collectors.toList());
-            } catch (Exception e) {
-                throw new RuntimeException("Error al obtener los datos de los Pokémon: " + e.getMessage(), e);
-            }
-        }, executor);
+                    return getPokemonByUrl(pokemonUrl);
+                });
     }
 
-    public Pokemon getPokemonByUrl(String url) {
-        try{
-            String response = restTemplate.getForObject(url, String.class);
-            JsonNode root = objectMapper.readTree(response);
-
-            Pokemon pokemon = new Pokemon();
-            pokemon.setId(root.get("id").asLong());
-            pokemon.setName(root.get("name").asText());
-            pokemon.setHeight(root.get("height").asDouble());
-            pokemon.setWeight(root.get("weight").asDouble());
-            pokemon.setBase_experience(root.get("base_experience").asInt());
-
-            //abilities
-            Set<Ability> abilities = new HashSet<>();
-            for (JsonNode abilityNode : root.get("abilities")) {
-                Ability ability = new Ability();
-                ability.setName(abilityNode.get("ability").get("name").asText());
-                abilities.add(ability);
-            }
-            pokemon.setAbilities(abilities);
-
-            //types
-            Set<Type> types = new HashSet<>();
-            for (JsonNode typeNode : root.get("types")) {
-                Type type = new Type();
-                type.setName(typeNode.get("type").get("name").asText());
-                types.add(type);
-            }
-            pokemon.setTypes(types);
-
-            //stast
-            List<Stat> stats = new ArrayList<>();
-            for (JsonNode statNode : root.get("stats")) {
-                Stat stat = new Stat();
-                stat.setName(statNode.get("stat").get("name").asText());
-                stat.setBaseStat(statNode.get("base_stat").asInt());
-                stat.setEffort(statNode.get("effort").asInt());
-                stats.add(stat);
-            }
-            pokemon.setStats(stats);
-
-            //Sprites
-            Sprites sprites = new Sprites();
-            sprites.setFrontDefault(getSpriteValue(root, "front_default"));
-            pokemon.setSprites(sprites);
-
-            return pokemon;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    public Mono<Pokemon> getPokemonByUrl(String url) {
+        return webClient.get()
+                .uri(url).retrieve().bodyToMono(String.class)
+                .flatMap(response -> {
+                    try{
+                        JsonNode root = objectMapper.readTree(response);
+                        return Mono.just(mapJsonToPokemon(root));
+                    }catch(Exception e){
+                        return Mono.error(e);
+                    }
+                });
     }
 
-public String getEvolutionChainUrl(Long pokemonId) {
-    try {
-        String speciesUrl = BASE_URL + "pokemon-species/" + pokemonId + "/";
-        String response = restTemplate.getForObject(speciesUrl, String.class);
+    // Mapea el JSON a un objeto Pokemon
+    private Pokemon mapJsonToPokemon(JsonNode root) {
+        Pokemon pokemon = new Pokemon();
+        pokemon.setId(root.get("id").asLong());
+        pokemon.setName(root.get("name").asText());
+        pokemon.setHeight(root.get("height").asDouble());
+        pokemon.setWeight(root.get("weight").asDouble());
+        pokemon.setBase_experience(root.get("base_experience").asInt());
 
-        JsonNode root = objectMapper.readTree(response);
-        return root.get("evolution_chain").get("url").asText();
-    } catch (Exception e) {
-        throw new RuntimeException("Error fetching evolution chain URL for Pokémon ID: " + pokemonId, e);
+        // Habilidades
+        Set<Ability> abilities = new HashSet<>();
+        root.get("abilities").forEach(abilityNode -> {
+            Ability ability = new Ability();
+            ability.setName(abilityNode.get("ability").get("name").asText());
+            abilities.add(ability);
+        });
+        pokemon.setAbilities(abilities);
+
+        // Tipos
+        Set<Type> types = new HashSet<>();
+        root.get("types").forEach(typeNode -> {
+            Type type = new Type();
+            type.setName(typeNode.get("type").get("name").asText());
+            types.add(type);
+        });
+        pokemon.setTypes(types);
+
+        // Estadísticas
+        List<Stat> stats = new ArrayList<>();
+        root.get("stats").forEach(statNode -> {
+            Stat stat = new Stat();
+            stat.setName(statNode.get("stat").get("name").asText());
+            stat.setBaseStat(statNode.get("base_stat").asInt());
+            stat.setEffort(statNode.get("effort").asInt());
+            stats.add(stat);
+        });
+        pokemon.setStats(stats);
+
+        // Sprites
+        Sprites sprites = new Sprites();
+        sprites.setFrontDefault(getSpriteValue(root, "front_default"));
+        pokemon.setSprites(sprites);
+
+        return pokemon;
     }
+
+public Mono<String> getEvolutionChainUrl(Long pokemonId) {
+    return webClient.get()
+            .uri("pokemon-species/{id}/", pokemonId)
+            .retrieve()
+            .bodyToMono(JsonNode.class)
+            .map(root -> root.get("evolution_chain").get("url").asText())
+            .onErrorMap(e -> new RuntimeException("Error obteniendo cadena de evolución: " + pokemonId, e));
 }
 
-    public List<Long> getEvolutionIdsByUrl(String url) {
-        try {
-            String response = restTemplate.getForObject(url, String.class);
-            JsonNode root = objectMapper.readTree(response);
-            JsonNode chain = root.get("chain");
-
-            List<Long> evolutionIds = new ArrayList<>();
-            extractEvolutionIds(chain, evolutionIds);
-
-            return evolutionIds;
-        } catch (Exception e) {
-            throw new RuntimeException("Error fetching evolution IDs: " + e.getMessage(), e);
-        }
+    public Mono<List<Long>> getEvolutionIdsByUrl(String url) {
+        return webClient.get()
+                .uri(url)
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .flatMap(root -> {
+                    List<Long> evolutionIds = new ArrayList<>();
+                    extractEvolutionIds(root.get("chain"), evolutionIds);
+                    return Mono.just(evolutionIds);
+                })
+                .onErrorMap(e -> new RuntimeException("Error obteniendo evoluciones: " + e.getMessage(), e));
     }
 
     private void extractEvolutionIds(JsonNode chainNode, List<Long> evolutionIds) {
@@ -150,9 +132,7 @@ public String getEvolutionChainUrl(Long pokemonId) {
             evolutionIds.add(speciesId);
         }
 
-        for (JsonNode next : chainNode.get("evolves_to")) {
-            extractEvolutionIds(next, evolutionIds);
-        }
+        chainNode.get("evolves_to").forEach(next -> extractEvolutionIds(next, evolutionIds));
     }
 
     private Long extractIdFromUrl(String url) {
