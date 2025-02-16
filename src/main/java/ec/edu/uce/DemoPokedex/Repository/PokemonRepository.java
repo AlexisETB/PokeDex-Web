@@ -34,11 +34,9 @@ public interface PokemonRepository extends JpaRepository<Pokemon, Long> {
     Optional<Pokemon> findByIdWithAbilities(@Param("id") Long id);
 
     //Pokemon con detalles nombre
-    @Query("SELECT DISTINCT p FROM Pokemon p LEFT JOIN FETCH p.stats LEFT JOIN FETCH p.types WHERE LOWER(p.name) = LOWER(:name)")
+    @Query("SELECT DISTINCT p FROM Pokemon p LEFT JOIN FETCH p.stats LEFT JOIN FETCH " +
+            "p.types WHERE LOWER(p.name) = LOWER(:name)")
     List<Pokemon> findByNameWithStatsAndTypes(@Param("name") String name);
-
-    @Query("SELECT DISTINCT p FROM Pokemon p LEFT JOIN FETCH p.abilities WHERE LOWER(p.name) = LOWER(:name)")
-    List<Pokemon> findByNameWithAbilities(@Param("name") String name);
 
     // Para la lista general
     @Query("SELECT DISTINCT p FROM Pokemon p LEFT JOIN FETCH p.types")
@@ -48,7 +46,4 @@ public interface PokemonRepository extends JpaRepository<Pokemon, Long> {
     @Query("SELECT p.sprites.frontDefault FROM Pokemon p WHERE p.id = :id")
     Optional<String> findSpriteById(@Param("id") Long id);
 
-    // Obtener un Pokémon junto con sus evoluciones (con JOIN FETCH)
-    @Query("SELECT p FROM Pokemon p LEFT JOIN FETCH p.evolutions WHERE p.id = :id")
-    Optional<Pokemon> findByIdWithEvolutions(@Param("id") Long id);
 }

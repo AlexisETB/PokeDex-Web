@@ -32,7 +32,7 @@ public class HelloApplication extends Application {
         fxmlLoader.setControllerFactory(springContext::getBean);
 
         Scene scene = new Scene(fxmlLoader.load(), 320, 240);
-        stage.setTitle("Hello!");
+        stage.setTitle("POKEDEX");
         stage.setScene(scene);
         stage.show();
     }

@@ -2,6 +2,7 @@ package ec.edu.uce.DemoPokedex.Services;
 
 import ec.edu.uce.DemoPokedex.Model.Pokemon;
 import ec.edu.uce.DemoPokedex.Model.Type;
+import ec.edu.uce.DemoPokedex.Repository.AbilityRepository;
 import ec.edu.uce.DemoPokedex.Repository.PokemonRepository;
 import ec.edu.uce.DemoPokedex.Repository.TypeRepository;
 import org.hibernate.Hibernate;
@@ -18,6 +19,10 @@ import java.util.Optional;
 public class PokemonService {
     @Autowired
     private PokemonRepository pokemonRepository;
+    @Autowired
+    private TypeRepository typeRepository;
+    @Autowired
+    private AbilityRepository abilityRepository;
 
 
     // Obtener todos los Pokémon
@@ -77,6 +82,18 @@ public class PokemonService {
     @Transactional(readOnly = true)
     public List<Pokemon> getPokemonByAbility(String abilityName) {
         return pokemonRepository.findByAbilityName(abilityName);
+    }
+
+    //Obtener todos los tipos
+    @Transactional
+    public List<String> getAllTypes(){
+        return typeRepository.findAllDistinctNames();
+    }
+
+    //Obtener todas las Habilidades
+    @Transactional
+    public List<String> getAllAbilities(){
+        return abilityRepository.findAllDistinctNames();
     }
 
 }

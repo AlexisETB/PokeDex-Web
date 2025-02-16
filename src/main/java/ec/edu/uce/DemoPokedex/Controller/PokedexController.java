@@ -5,10 +5,11 @@ import ec.edu.uce.DemoPokedex.Model.Ability;
 import ec.edu.uce.DemoPokedex.Model.Pokemon;
 import ec.edu.uce.DemoPokedex.Model.Stat;
 import ec.edu.uce.DemoPokedex.Model.Type;
-import ec.edu.uce.DemoPokedex.Optim.AsyncTaskRunner;
 import ec.edu.uce.DemoPokedex.Optim.SpriteCache;
 import ec.edu.uce.DemoPokedex.Services.PokemonService;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -18,7 +19,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
@@ -29,7 +29,6 @@ import org.springframework.stereotype.Controller;
 
 
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -54,7 +53,7 @@ public class PokedexController {
     private Label DefensaEsp;
 
     @FXML
-    private ComboBox<?> FiltrarHabilidad;
+    private ComboBox<String> filtrarHabilidad;
 
     @FXML
     private Label Velocidad;
@@ -93,7 +92,7 @@ public class PokedexController {
     private TextField escNumeroPokemon;
 
     @FXML
-    private ComboBox<?> filtrarTipo;
+    private ComboBox<String> filtrarTipo;
 
     @FXML
     private GridPane gridPanePokemon;
@@ -153,6 +152,59 @@ public class PokedexController {
     @FXML
     public void initialize() {
         configurarScrollInfinito();
+    }
+
+
+    private void cargarTiposEnComboBox() {
+        Task<List<String>> task = new Task<>() {
+            @Override
+            protected List<String> call() {
+                return pokemonService.getAllTypes();
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            List<String> tipos = task.getValue();
+            Platform.runLater(() -> {
+                filtrarTipo.getItems().clear();
+                tipos.add(0, "All Types");
+                ObservableList<String> tiposObservable = FXCollections.observableArrayList(tipos); // Crear una lista observable
+                filtrarTipo.setItems(tiposObservable);
+                filtrarTipo.getSelectionModel().selectFirst();
+            });
+        });
+
+        task.setOnFailed(e -> {
+            Platform.runLater(() -> mostrarMensaje("Error al cargar tipos: " + task.getException().getMessage()));
+        });
+
+        backgroundExecutor.execute(task);
+    }
+
+    private void cargarHabilidadesEnComboBox() {
+        Task<List<String>> task = new Task<>() {
+            @Override
+            protected List<String> call() {
+                return pokemonService.getAllAbilities();
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            List<String> habilidades = task.getValue();
+            Platform.runLater(() -> {
+                filtrarHabilidad.getItems().clear();
+                habilidades.add(0, "All Abilities");
+                ObservableList<String> habilidadesObservable = FXCollections.observableArrayList(habilidades); // Crear una lista observable
+                filtrarHabilidad.setItems(habilidadesObservable);
+                filtrarHabilidad.getSelectionModel().selectFirst();
+            });
+        });
+
+        task.setOnFailed(e -> {
+            Platform.runLater(() -> mostrarMensaje("Error al cargar habilidades: " + task.getException().getMessage()));
+        });
+
+        backgroundExecutor.execute(task);
     }
 
     private void configurarScrollInfinito() {
@@ -329,6 +381,11 @@ public class PokedexController {
         System.out.println("Filtrando por habilidad");
     }
 
+    @FXML
+    private void filtrarPokemon(){
+
+    }
+
     private void mostrarPokemonData(Pokemon pokemon) {
         // 1. Mostrar nombre y número del Pokémon
         nombreNumeroPokemon.setText(pokemon.getName() + " (#" + pokemon.getId() + ")");
@@ -470,6 +527,8 @@ public class PokedexController {
             gridPanePokemon.getChildren().clear();
             currentPage = 0;
             cargarPagina(currentPage);
+            cargarTiposEnComboBox();
+            cargarHabilidadesEnComboBox();
         }));
 
         backgroundExecutor.execute(task);

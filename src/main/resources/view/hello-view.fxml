@@ -34,7 +34,7 @@
                         </Label>
                         <Label prefHeight="49.0" prefWidth="120.0" text="DEX">
                            <font>
-                              <Font name="Cambria" size="40.0" />
+                              <Font name="Cambria Bold" size="40.0" />
                            </font>
                         </Label>
                      </children>
@@ -462,12 +462,12 @@
                      <children>
                         <HBox prefHeight="68.0" prefWidth="300.0">
                            <children>
-                              <ComboBox fx:id="filtrarTipo" prefHeight="26.0" prefWidth="265.0" promptText="TIPO" styleClass="comboBox" stylesheets="@../values/styles.css" />
+                              <ComboBox fx:id="filtrarTipo" onAction="#filtrarPokemon" prefHeight="26.0" prefWidth="265.0" promptText="TIPO" styleClass="comboBox" stylesheets="@../values/styles.css" />
                            </children>
                         </HBox>
                         <HBox prefHeight="68.0" prefWidth="311.0">
                            <children>
-                              <ComboBox fx:id="FiltrarHabilidad" prefHeight="26.0" prefWidth="265.0" promptText="HABILIDAD" styleClass="comboBox" stylesheets="@../values/styles.css" />
+                              <ComboBox fx:id="filtrarHabilidad" onAction="#filtrarPokemon" prefHeight="26.0" prefWidth="265.0" promptText="HABILIDAD" styleClass="comboBox" stylesheets="@../values/styles.css" />
                            </children>
                         </HBox>
                      </children>
