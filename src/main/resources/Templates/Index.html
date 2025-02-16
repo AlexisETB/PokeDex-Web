@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pokédex</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+  <div class="left-section">
+    <div class="search-area">
+      <input type="text" id="searchName" placeholder="Buscar por nombre">
+      <button id="searchNameBtn">Buscar</button>
+      <input type="number" id="searchNumber" placeholder="Buscar por número">
+      <button id="searchNumberBtn">Buscar</button>
+    </div>
+    <div class="pokemon-details">
+      <h2 id="pokemonTitle"></h2>
+      <p id="pokemonDescription"></p>
+      <img id="pokemonImage" src="/placeholder.svg" alt="Pokémon">
+      <div class="pokemon-info">
+        <p id="pokemonHeight"></p>
+        <p id="pokemonWeight"></p>
+        <p id="pokemonCategory"></p>
+        <p id="pokemonAbility"></p>
+      </div>
+      <div id="pokemonTypes"></div>
+      <div class="base-stats">
+        <div class="stat-bar">
+          <label for="hpStat">PS</label>
+          <progress id="hpStat" value="0" max="100"></progress>
+        </div>
+        <div class="stat-bar">
+          <label for="attackStat">Ataque</label>
+          <progress id="attackStat" value="0" max="100"></progress>
+        </div>
+        <div class="stat-bar">
+          <label for="defenseStat">Defensa</label>
+          <progress id="defenseStat" value="0" max="100"></progress>
+        </div>
+        <div class="stat-bar">
+          <label for="spAttackStat">Ataque Especial</label>
+          <progress id="spAttackStat" value="0" max="100"></progress>
+        </div>
+        <div class="stat-bar">
+          <label for="spDefenseStat">Defensa Especial</label>
+          <progress id="spDefenseStat" value="0" max="100"></progress>
+        </div>
+        <div class="stat-bar">
+          <label for="speedStat">Velocidad</label>
+          <progress id="speedStat" value="0" max="100"></progress>
+        </div>
+      </div>
+      <div id="evolutionChain"></div>
+    </div>
+  </div>
+  <div class="right-section">
+    <button id="loadDataBtn">Cargar Data</button>
+    <div class="filters">
+      <select id="typeFilter">
+        <option value="">Filtrar por Tipo</option>
+      </select>
+      <select id="abilityFilter">
+        <option value="">Filtrar por Habilidad</option>
+      </select>
+    </div>
+    <div id="pokemonList" class="pokemon-list"></div>
+  </div>
+</div>
+<script src="script.js"></script>
+
+</body>
+</html>

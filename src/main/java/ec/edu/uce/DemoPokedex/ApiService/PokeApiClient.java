@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class PokeApiClient {
+
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private static final String BASE_URL = "https://pokeapi.co/api/v2/";
