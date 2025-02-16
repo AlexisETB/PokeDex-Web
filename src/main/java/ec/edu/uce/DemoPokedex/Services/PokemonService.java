@@ -6,6 +6,8 @@ import ec.edu.uce.DemoPokedex.Repository.PokemonRepository;
 import ec.edu.uce.DemoPokedex.Repository.TypeRepository;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,24 +22,37 @@ public class PokemonService {
 
     // Obtener todos los Pokémon
     @Transactional(readOnly = true)
-    public List<Pokemon> getAllPokemon() {
-        return pokemonRepository.findAll();
+    public Page<Pokemon> getAllPokemon(Pageable pageable) {
+        return pokemonRepository.findAllWithTypes(pageable);
     }
-
     // Obtener Pokémon por ID
     @Transactional(readOnly = true)
     public Optional<Pokemon> getPokemonById(Long id) {
-        Pokemon pokemon = pokemonRepository.findById(id).orElse(null);
-        Hibernate.initialize(pokemon.getStats());
-        return pokemonRepository.findById(id);
+        // Primera consulta: Carga stats y types
+        Optional<Pokemon> pokemonOpt = pokemonRepository.findByIdWithStatsAndTypes(id);
+
+        // Segunda consulta: Carga abilities si el Pokémon existe
+        pokemonOpt.ifPresent(pokemon ->
+                pokemonRepository.findByIdWithAbilities(id).ifPresent(p ->
+                        pokemon.setAbilities(p.getAbilities())
+                )
+        );
+
+        return pokemonOpt;
     }
 
     // Obtener Pokémon por nombre
     @Transactional(readOnly = true)
     public List<Pokemon> getPokemonByName(String name) {
-        Pokemon pokemon = pokemonRepository.findByNameIgnoreCase(name).get(0);
-        Hibernate.initialize(pokemon.getStats());
-        return pokemonRepository.findByNameIgnoreCase(name);
+        List<Pokemon> resultados = pokemonRepository.findByNameWithStatsAndTypes(name);
+
+        // Cargar abilities para cada Pokémon encontrado
+        resultados.forEach(pokemon ->
+                pokemonRepository.findByIdWithAbilities(pokemon.getId()).ifPresent(p ->
+                        pokemon.setAbilities(p.getAbilities())
+                ));
+
+        return resultados;
     }
 
     // Obtener Pokémon por tipo
@@ -63,11 +78,5 @@ public class PokemonService {
     public List<Pokemon> getPokemonByAbility(String abilityName) {
         return pokemonRepository.findByAbilityName(abilityName);
     }
-
-    @Transactional(readOnly = true)
-    public List<Pokemon> findAllWithTypesAndAbilities(){
-        return pokemonRepository.findAllWithTypesAndAbilities();
-    }
-
 
 }

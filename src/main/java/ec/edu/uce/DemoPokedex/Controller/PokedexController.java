@@ -5,11 +5,14 @@ import ec.edu.uce.DemoPokedex.Model.Ability;
 import ec.edu.uce.DemoPokedex.Model.Pokemon;
 import ec.edu.uce.DemoPokedex.Model.Stat;
 import ec.edu.uce.DemoPokedex.Model.Type;
+import ec.edu.uce.DemoPokedex.Optim.AsyncTaskRunner;
+import ec.edu.uce.DemoPokedex.Optim.SpriteCache;
 import ec.edu.uce.DemoPokedex.Services.PokemonService;
+import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -19,22 +22,21 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 
 
-import java.awt.*;
-import javafx.geometry.Insets;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static ec.edu.uce.DemoPokedex.DemoPokedexApplication.context;
 
 @Controller
 public class PokedexController {
@@ -144,61 +146,177 @@ public class PokedexController {
     @FXML
     private Label tipoEvo3;
 
+    private int currentPage = 0;
+    private boolean isLoading = false;
+    private final ExecutorService backgroundExecutor = Executors.newFixedThreadPool(4);
+
+    @FXML
+    public void initialize() {
+        configurarScrollInfinito();
+    }
+
+    private void configurarScrollInfinito() {
+        scrollPanePokemon.vvalueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal.doubleValue() > 0.95 && !isLoading) {
+                cargarPagina(currentPage + 1);
+            }
+        });
+    }
+
+    private void cargarPagina(int page) {
+        if (isLoading) return;
+        isLoading = true;
+
+        Task<Page<Pokemon>> task = new Task<>() {
+            @Override
+            protected Page<Pokemon> call() {
+
+                return pokemonService.getAllPokemon(PageRequest.of(page, 30));
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            Page<Pokemon> pagina = task.getValue();
+            Platform.runLater(() -> {
+                mostrarTodosLosPokemon(pagina.getContent());
+                currentPage = pagina.getNumber();
+                isLoading = false;
+            });
+        });
+
+        task.setOnFailed(e -> {
+            Platform.runLater(() -> {
+                mostrarMensaje("Error al cargar: " + task.getException().getMessage());
+                isLoading = false;
+            });
+        });
+
+        backgroundExecutor.execute(task);
+    }
+
+    private void mostrarTodosLosPokemon(List<Pokemon> pokemons) {
+
+        gridPanePokemon.setHgap(20);
+        gridPanePokemon.setVgap(20);
+
+        int columnas = 3; // Número de columnas en el GridPane
+        int fila = gridPanePokemon.getRowCount();;
+        int columna = 1;
+
+        for (Pokemon pokemon : pokemons) {
+            AnchorPane tarjeta = cargarTarjetaPokemon(pokemon);
+            if (tarjeta != null) {
+                gridPanePokemon.add(tarjeta, columna, fila);
+
+                tarjeta.setOnMouseClicked(event -> {
+                    Long pokemonId = pokemon.getId();
+                    ActionEvent fakeEvent = new ActionEvent(event.getSource(), event.getTarget());
+                    escNombrePokemon.setText(pokemon.getName());
+                    escNumeroPokemon.setText(String.valueOf(pokemonId));
+                    buscarPorNumero(fakeEvent);
+                });
+
+                columna++;
+                if (columna > columnas) {
+                    columna = 1;
+                    fila++;
+                }
+            }
+        }
+
+    }
+
+    private AnchorPane cargarTarjetaPokemon(Pokemon pokemon) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/pokemon.fxml"));
+            AnchorPane tarjeta = loader.load();
+            actualizarTarjetaPokemon(tarjeta, pokemon);
+            return tarjeta;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private void actualizarTarjetaPokemon(AnchorPane tarjeta, Pokemon pokemon) {
+        ImageView imagenPokemonCard = (ImageView) tarjeta.lookup("#imagenPokemonCard");
+        Label numeroPokemon = (Label) tarjeta.lookup("#numeroPokemon");
+        Label nombrePokemonCard = (Label) tarjeta.lookup("#nombrePokemonCard");
+        Label tipoPokemonCard = (Label) tarjeta.lookup("#tipoPokemonCard");
+
+        numeroPokemon.setText("# " + String.format("%03d", pokemon.getId()));
+        nombrePokemonCard.setText(pokemon.getName());
+
+        String tiposConcatenados = pokemon.getTypes().stream()
+                .map(Type::getName)
+                .collect(Collectors.joining(", "));
+        tipoPokemonCard.setText(tiposConcatenados);
+
+        if (pokemon.getSprites() != null) {
+            String spriteUrl = pokemon.getSprites().getFrontDefault();
+            imagenPokemonCard.setImage(SpriteCache.getOrLoad(pokemon.getId(), spriteUrl));
+        }
+    }
+
     @FXML
     private void buscarPorNombre(ActionEvent event) {
         String nombre = escNombrePokemon.getText().trim();
+        if (!esNombreValido(nombre)) {
+            mostrarMensaje("Nombre inválido");
+            return;
+        }
 
-        Optional.ofNullable(nombre)
-                .filter(n -> !n.isEmpty())
+        Task<List<Pokemon>> task = new Task<>() {
+            @Override
+            protected List<Pokemon> call() {
+                return pokemonService.getPokemonByName(nombre);
+            }
+        };
+
+        task.setOnSucceeded(e -> Optional.ofNullable(task.getValue())
+                .filter(resultados -> !resultados.isEmpty())
                 .ifPresentOrElse(
-                        n -> {
-                            if (!n.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+")) {
-                                mostrarMensaje("El nombre no debe contener números ni caracteres especiales.");
-                            } else {
-                                pokemonService.getPokemonByName(n)
-                                        .stream()
-                                        .findFirst()
-                                        .ifPresentOrElse(
-                                                this::mostrarPokemonData,
-                                                () -> mostrarMensaje("No se encontró ningún Pokémon con el nombre: " + n)
-                                        );
-                            }
-                        },
-                        () -> mostrarMensaje("Por favor, ingrese un nombre.")
-                );
+                        resultados -> Platform.runLater(() -> mostrarPokemonData(resultados.get(0))),
+                        () -> mostrarMensaje("Pokémon no encontrado")
+                )
+        );
+
+        backgroundExecutor.execute(task);
+    }
+
+    private static boolean esNombreValido(String nombre) {
+        return !nombre.isEmpty() && nombre.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+");
     }
 
     @FXML
     private void buscarPorNumero(ActionEvent event) {
-        Optional.ofNullable(escNumeroPokemon.getText()) // Convertir el texto en un Optional
-                .map(String::trim) // Eliminar espacios en blanco
-                .filter(text -> !text.isEmpty()) // Filtrar si el texto no está vacío
-                .flatMap(text -> { // Convertir el texto a Long y buscar el Pokémon
-                    try {
-                        Long id = Long.parseLong(text);
-                        return pokemonService.getPokemonById(id);
-                    } catch (NumberFormatException e) {
-                        mostrarMensaje("El ID ingresado no es válido.");
-                        return Optional.empty();
-                    }
-                })
-                .ifPresentOrElse(
-                        this::mostrarPokemonData, // Si el Pokémon está presente, mostrar sus datos
-                        () -> mostrarMensaje("No se encontró ningún Pokémon con el ID ingresado.") // Si no, mostrar mensaje de error
-                );
+        parseLong(escNumeroPokemon.getText().trim())
+                .ifPresentOrElse(this::cargarPokemonPorId,
+                        () -> mostrarMensaje("ID inválido"));
     }
 
-    @FXML
-    private void cargarDatos(ActionEvent event)  {
+    private Optional<Long> parseLong(String text) {
         try {
-            pokeService.saveAllData();
-            mostrarMensaje("Datos cargados exitosamente desde la API.");
-
-            mostrarTodosLosPokemon();
-            System.out.println("Datos cargados exitosamente");
-        } catch (Exception e) {
-            mostrarMensaje("Ocurrió un error al cargar los datos: " + e.getMessage());
+            return Optional.of(Long.parseLong(text));
+        } catch (NumberFormatException e) {
+            return Optional.empty();
         }
+    }
+
+    private void cargarPokemonPorId(Long id) {
+        Task<Optional<Pokemon>> task = new Task<>() {
+            @Override
+            protected Optional<Pokemon> call() {
+                return pokemonService.getPokemonById(id);
+            }
+        };
+
+        task.setOnSucceeded(e -> task.getValue()
+                .ifPresentOrElse(p -> Platform.runLater(() -> mostrarPokemonData(p)),
+                        () -> mostrarMensaje("Pokémon no encontrado"))
+        );
+
+        backgroundExecutor.execute(task);
     }
 
     @FXML
@@ -209,28 +327,6 @@ public class PokedexController {
     @FXML
     private void filtrarPorHabilidad()  {
         System.out.println("Filtrando por habilidad");
-    }
-
-    @FXML
-    private void mostrarEvoluciones(Long pokemonId) {
-        limpiarDatosEvoluciones();
-        List<Long> evolucionesIds = pokemonService.getEvolutionsById(pokemonId);
-
-        if (evolucionesIds.isEmpty()) {
-            mostrarMensaje("Este Pokémon no tiene evoluciones.");
-            return;
-        }
-
-        // Usamos un Stream sobre la lista de IDs
-        evolucionesIds.stream()
-                .map(id -> pokemonService.getPokemonById(id))
-                .forEach(optionalPokemon -> {
-                    int index = evolucionesIds.indexOf(optionalPokemon.map(Pokemon::getId).orElse(null)) + 1;
-                    optionalPokemon.ifPresentOrElse(
-                            pokemon -> mostrarEvolucionData(index, pokemon),
-                            () -> mostrarEvolucionData(index, null)
-                    );
-                });
     }
 
     private void mostrarPokemonData(Pokemon pokemon) {
@@ -270,7 +366,7 @@ public class PokedexController {
 
         // 6. Cargar el sprite del Pokémon
         pokemonService.getSpriteById(pokemon.getId())
-                .ifPresent(spriteUrl -> imagenPokemon.setImage(new Image(spriteUrl)));
+                .ifPresent(url -> imagenPokemon.setImage(SpriteCache.getOrLoad(pokemon.getId(), url)));
 
         // 7. Mostrar evoluciones del Pokémon
         mostrarEvoluciones(pokemon.getId());
@@ -296,28 +392,87 @@ public class PokedexController {
                 ));
     }
 
-    private void mostrarEvolucionData(int index, Pokemon evolucion) {
-        // Definimos arreglos para los componentes de la interfaz
-        Label[] nombreEvoLabels = {nombreEvo1, nombreEvo2, nombreEvo3};
-        ImageView[] imagenEvoViews = {imagenEvo1, imagenEvo2, imagenEvo3};
+    private void mostrarEvoluciones(Long pokemonId) {
+        limpiarDatosEvoluciones();
+        Task<List<Long>> task = new Task<>() {
+            @Override
+            protected List<Long> call() {
+                return pokemonService.getEvolutionsById(pokemonId);
+            }
+        };
 
-        // Validamos que el índice esté dentro del rango válido
-        if (index < 1 || index > 3) {
-            throw new IllegalArgumentException("Índice de evolución no válido: " + index);
-        }
+        task.setOnSucceeded(e -> {
+            List<Long> evolutionIds = task.getValue();
+            if (evolutionIds.isEmpty()) {
+                Platform.runLater(() -> mostrarMensaje("Sin evoluciones"));
+            } else {
+                evolutionIds.stream()
+                        .limit(3)
+                        .forEach(id -> cargarEvolucion(id, evolutionIds.indexOf(id) + 1));
+            }
+        });
 
-        // Obtenemos los componentes correspondientes al índice
-        Label nombreLabel = nombreEvoLabels[index - 1];
-        ImageView imagenView = imagenEvoViews[index - 1];
+        backgroundExecutor.execute(task);
+    }
 
-        // Actualizamos los componentes según si la evolución es nula o no
-        if (evolucion == null) {
-            nombreLabel.setText("N/A");
-            imagenView.setImage(null);
-        } else {
-            nombreLabel.setText(evolucion.getName());
-            imagenView.setImage(new Image(evolucion.getSprites().getFrontDefault()));
-        }
+
+    private void cargarEvolucion(Long evolutionId, int position) {
+        Task<Optional<Pokemon>> task = new Task<>() {
+            @Override
+            protected Optional<Pokemon> call() {
+                return pokemonService.getPokemonById(evolutionId);
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            Optional<Pokemon> evolucion = task.getValue();
+            Platform.runLater(() -> actualizarUIEvolucion(evolucion, position));
+        });
+
+        backgroundExecutor.execute(task);
+    }
+
+    private void actualizarUIEvolucion(Optional<Pokemon> evolucion, int position) {
+        Label[] nombreLabels = {nombreEvo1, nombreEvo2, nombreEvo3};
+        Label[] tipoLabels = {tipoEvo1, tipoEvo2, tipoEvo3};
+        ImageView[] imagenViews = {imagenEvo1, imagenEvo2, imagenEvo3};
+
+        if (position < 1 || position > 3) return;
+
+        evolucion.ifPresentOrElse(
+                p -> {
+                    nombreLabels[position-1].setText(p.getName());
+                    tipoLabels[position-1].setText(p.getTypes().stream()
+                            .map(Type::getName)
+                            .collect(Collectors.joining(", ")));
+                    pokemonService.getSpriteById(p.getId())
+                            .ifPresent(url -> imagenViews[position-1].setImage(SpriteCache.getOrLoad(p.getId(), url)));
+                },
+                () -> {
+                    nombreLabels[position-1].setText("N/A");
+                    imagenViews[position-1].setImage(null);
+                }
+        );
+    }
+
+    @FXML
+    private void cargarDatos(ActionEvent event) {
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                pokeService.saveAllData();
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(e -> Platform.runLater(() -> {
+            mostrarMensaje("Datos cargados exitosamente");
+            gridPanePokemon.getChildren().clear();
+            currentPage = 0;
+            cargarPagina(currentPage);
+        }));
+
+        backgroundExecutor.execute(task);
     }
 
     private void limpiarDatosEvoluciones() {
@@ -325,74 +480,15 @@ public class PokedexController {
         nombreEvo2.setText("");
         nombreEvo3.setText("");
 
+        tipoEvo1.setText("");
+        tipoEvo2.setText("");
+        tipoEvo3.setText("");
+
         imagenEvo1.setImage(null);
         imagenEvo2.setImage(null);
         imagenEvo3.setImage(null);
     }
 
-
-    private void mostrarTodosLosPokemon() {
-        List<Pokemon> pokemons = pokemonService.getAllPokemon().stream()
-                .sorted(Comparator.comparing(Pokemon::getId))
-                .collect(Collectors.toList());
-
-        gridPanePokemon.getChildren().clear(); // Limpiar el GridPane
-
-        gridPanePokemon.setHgap(20);
-        gridPanePokemon.setVgap(20);
-
-        int columnas = 3; // Número de columnas en el GridPane
-        int fila = 0;
-        int columna = 1;
-
-        for (Pokemon pokemon : pokemons) {
-            AnchorPane tarjeta = cargarTarjetaPokemon();
-            if (tarjeta != null) {
-                actualizarTarjetaPokemon(tarjeta, pokemon);
-                gridPanePokemon.add(tarjeta, columna, fila);
-
-                tarjeta.setOnMouseClicked(event -> mostrarPokemonData(pokemon));
-
-                columna++;
-                if (columna > columnas) {
-                    columna = 1;
-                    fila++;
-                }
-            }
-        }
-
-        scrollPanePokemon.setContent(gridPanePokemon);
-    }
-
-    private AnchorPane cargarTarjetaPokemon() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/pokemon.fxml"));
-            return loader.load();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private void actualizarTarjetaPokemon(AnchorPane tarjeta, Pokemon pokemon) {
-        ImageView imagenPokemonCard = (ImageView) tarjeta.lookup("#imagenPokemonCard");
-        Label numeroPokemon = (Label) tarjeta.lookup("#numeroPokemon");
-        Label nombrePokemonCard = (Label) tarjeta.lookup("#nombrePokemonCard");
-        Label tipoPokemonCard = (Label) tarjeta.lookup("#tipoPokemonCard");
-
-        numeroPokemon.setText("Nro " + String.format("%03d", pokemon.getId()));
-        nombrePokemonCard.setText(pokemon.getName());
-
-        String tiposConcatenados = pokemon.getTypes().stream()
-                .map(Type::getName)
-                .collect(Collectors.joining(", "));
-        tipoPokemonCard.setText(tiposConcatenados);
-
-        String spriteUrl = pokemon.getSprites().getFrontDefault();
-        if (spriteUrl != null) {
-            imagenPokemonCard.setImage(new Image(spriteUrl));
-        }
-    }
 
     private void mostrarMensaje(String mensaje) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -400,5 +496,10 @@ public class PokedexController {
         alert.setContentText(mensaje);
         alert.showAndWait();
     }
+
+    public void shutdown() {
+        backgroundExecutor.shutdown();
+    }
+
 
 }

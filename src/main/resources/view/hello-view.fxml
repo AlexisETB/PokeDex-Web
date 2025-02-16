@@ -43,12 +43,12 @@
                      <children>
                         <HBox alignment="CENTER" prefHeight="40.0" prefWidth="300.0" stylesheets="@../values/styles.css">
                            <children>
-                              <TextField fx:id="escNombrePokemon" prefHeight="40.0" prefWidth="274.0" promptText="Escribe el nombre del pokemon" styleClass="transparent" stylesheets="@../model/style.css">
+                              <TextField fx:id="escNombrePokemon" prefHeight="40.0" prefWidth="274.0" promptText="Escribe el nombre del pokemon" styleClass="transparent" stylesheets="@../values/styles.css">
                                  <font>
                                     <Font name="Cambria" size="16.0" />
                                  </font>
                               </TextField>
-                              <Button fx:id="buscarNombrePokemon" mnemonicParsing="false" onAction="#buscarPorNombre" prefHeight="40.0" prefWidth="165.0" styleClass="search-button" stylesheets="@../model/style.css" text="Buscar" textFill="WHITE">
+                              <Button fx:id="buscarNombrePokemon" mnemonicParsing="false" onAction="#buscarPorNombre" prefHeight="40.0" prefWidth="165.0" styleClass="search-button" stylesheets="@../values/styles.css" text="Buscar" textFill="WHITE">
                                  <HBox.margin>
                                     <Insets />
                                  </HBox.margin>
@@ -62,12 +62,12 @@
                         <HBox prefHeight="45.0" prefWidth="45.0" />
                         <HBox alignment="CENTER" prefHeight="40.0" prefWidth="300.0" stylesheets="@../values/styles.css">
                            <children>
-                              <TextField fx:id="escNumeroPokemon" prefHeight="40.0" prefWidth="274.0" promptText="Escribe el número del pokemon" styleClass="transparent" stylesheets="@../model/style.css">
+                              <TextField fx:id="escNumeroPokemon" prefHeight="40.0" prefWidth="274.0" promptText="Escribe el número del pokemon" styleClass="transparent" stylesheets="@../values/styles.css">
                                  <font>
                                     <Font name="Cambria" size="16.0" />
                                  </font>
                               </TextField>
-                              <Button fx:id="buscarNumeroPokemon" mnemonicParsing="false" onAction="#buscarPorNumero" prefHeight="40.0" prefWidth="164.0" styleClass="search-button" stylesheets="@../model/style.css" text="Buscar" textFill="WHITE">
+                              <Button fx:id="buscarNumeroPokemon" mnemonicParsing="false" onAction="#buscarPorNumero" prefHeight="40.0" prefWidth="164.0" styleClass="search-button" stylesheets="@../values/styles.css" text="Buscar" textFill="WHITE">
                                  <HBox.margin>
                                     <Insets />
                                  </HBox.margin>
@@ -161,7 +161,7 @@
                                                       <Insets top="10.0" />
                                                    </VBox.margin>
                                                 </Label>
-                                                <ComboBox fx:id="habilidad" prefHeight="26.0" prefWidth="154.0" styleClass="comboBox" stylesheets="@../model/style.css" />
+                                                <ComboBox fx:id="habilidad" prefHeight="26.0" prefWidth="154.0" styleClass="comboBox" stylesheets="@../values/styles.css" />
                                              </children>
                                           </VBox>
                                        </children>
@@ -262,7 +262,7 @@
                                           <VBox prefHeight="89.0" prefWidth="140.0">
                                              <children>
                                                 <HBox prefHeight="32.0" prefWidth="140.0" />
-                                                <ProgressBar prefHeight="15.0" prefWidth="110.0" progress="0.26" styleClass="pokemon-progress-bar" stylesheets="@../model/style.css">
+                                                <ProgressBar prefHeight="15.0" prefWidth="110.0" progress="0.26" styleClass="pokemon-progress-bar" stylesheets="@../values/styles.css">
                                                    <VBox.margin>
                                                       <Insets />
                                                    </VBox.margin>
@@ -336,7 +336,7 @@
                                     </HBox>
                                     <HBox alignment="CENTER" prefHeight="26.0" prefWidth="166.0">
                                        <children>
-                                          <Label fx:id="nombreEvo1" alignment="CENTER" contentDisplay="CENTER" text="Pichu Nro. 0172 ">
+                                          <Label fx:id="nombreEvo1" alignment="CENTER" contentDisplay="CENTER" text="null">
                                              <font>
                                                 <Font name="Yu Gothic UI Bold" size="12.0" />
                                              </font>
@@ -345,7 +345,7 @@
                                     </HBox>
                                     <HBox alignment="CENTER" prefHeight="30.0" prefWidth="166.0">
                                        <children>
-                                          <Label fx:id="tipoEvo1" text="Eléctrico">
+                                          <Label fx:id="tipoEvo1" text="null">
                                              <font>
                                                 <Font name="Tahoma" size="12.0" />
                                              </font>
@@ -448,7 +448,7 @@
                      <children>
                         <ImageView fitHeight="80.0" fitWidth="116.0" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@../images/pokeball_PNG29.png" />
+                              <Image url="@../Images/pokeballf.png" />
                            </image>
                         </ImageView>
                         <Button fx:id="cargarDatosPokeApi" mnemonicParsing="false" onAction="#cargarDatos" styleClass="add-btn" stylesheets="@../values/styles.css" text="Cargar Data" textFill="#4d4949">

@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,37 +29,37 @@ public class PokeApiClient {
         this.objectMapper = new ObjectMapper();
     }
 
-    public List<Pokemon> getAllPokemon() {
+    public CompletableFuture<List<Pokemon>> getAllPokemon() {
         List<Pokemon> pokemonList = new ArrayList<>();
         String url = BASE_URL + "pokemon?limit=1025&offset=0";
 
-
-        try {
-            // Obtener la lista inicial de Pokémon (IDs y nombres)
-            String response = restTemplate.getForObject(url, String.class);
-            JsonNode root = objectMapper.readTree(response);
-
-            JsonNode results = root.get("results");
-
-            // Procesar URLs en paralelo con CompletableFuture
+        return CompletableFuture.supplyAsync(() -> {
             List<CompletableFuture<Pokemon>> futures = new ArrayList<>();
-            for (JsonNode pokemonNode : results) {
-                String pokemonUrl = pokemonNode.get("url").asText();
-                CompletableFuture<Pokemon> future = CompletableFuture.supplyAsync(
-                        () -> getPokemonByUrl(pokemonUrl),
-                        executor
-                );
-                futures.add(future);
-            }
+            try {
+                // Obtener la lista inicial de Pokémon (IDs y nombres)
+                String response = restTemplate.getForObject(url, String.class);
+                JsonNode root = objectMapper.readTree(response);
 
-            // Esperar a que todos los procesos terminen y recopilar los resultados
-            return futures.stream()
-                    .map(CompletableFuture::join)
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            throw new RuntimeException("Error al obtener los datos de los Pokémon: " + e.getMessage(), e);
-        }
-        //return pokemonList;
+                JsonNode results = root.get("results");
+
+                // Procesar URLs en paralelo con CompletableFuture
+                for (JsonNode pokemonNode : results) {
+                    String pokemonUrl = pokemonNode.get("url").asText();
+                    CompletableFuture<Pokemon> future = CompletableFuture.supplyAsync(
+                            () -> getPokemonByUrl(pokemonUrl),
+                            executor
+                    );
+                    futures.add(future);
+                }
+
+                // Esperar a que todos los procesos terminen y recopilar los resultados
+                return futures.stream()
+                        .map(CompletableFuture::join)
+                        .collect(Collectors.toList());
+            } catch (Exception e) {
+                throw new RuntimeException("Error al obtener los datos de los Pokémon: " + e.getMessage(), e);
+            }
+        }, executor);
     }
 
     public Pokemon getPokemonByUrl(String url) {
@@ -73,7 +75,7 @@ public class PokeApiClient {
             pokemon.setBase_experience(root.get("base_experience").asInt());
 
             //abilities
-            List<Ability> abilities = new ArrayList<>();
+            Set<Ability> abilities = new HashSet<>();
             for (JsonNode abilityNode : root.get("abilities")) {
                 Ability ability = new Ability();
                 ability.setName(abilityNode.get("ability").get("name").asText());
@@ -82,7 +84,7 @@ public class PokeApiClient {
             pokemon.setAbilities(abilities);
 
             //types
-            List<Type> types = new ArrayList<>();
+            Set<Type> types = new HashSet<>();
             for (JsonNode typeNode : root.get("types")) {
                 Type type = new Type();
                 type.setName(typeNode.get("type").get("name").asText());

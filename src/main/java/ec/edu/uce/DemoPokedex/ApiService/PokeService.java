@@ -28,7 +28,7 @@ public class PokeService {
     public void saveAllPokemon() {
         try {
             System.out.println("Iniciando Guardado de Pokémon...");
-            List<Pokemon> pokemons = pokeApiClient.getAllPokemon(); // Obtiene todos los Pokémon desde la API
+            List<Pokemon> pokemons = pokeApiClient.getAllPokemon().join(); // Obtiene todos los Pokémon desde la API
 
             // Guardar cada Pokémon en paralelo utilizando CompletableFuture
             List<CompletableFuture<Void>> futures = pokemons.stream()
@@ -41,6 +41,7 @@ public class PokeService {
         } catch (Exception e) {
             System.err.println("Error durante el guardado de Pokémon: " + e.getMessage());
             e.printStackTrace();
+
         }
     }
 
