@@ -60,10 +60,22 @@ public class PokemonService {
         return resultados;
     }
 
+    // Obtener Pokémon por habilidad
+    @Transactional(readOnly = true)
+    public Page<Pokemon> getPokemonByAbility(String abilityName, Pageable pageable) {
+        return pokemonRepository.findByAbilityName(abilityName, pageable);
+    }
+
     // Obtener Pokémon por tipo
     @Transactional(readOnly = true)
-    public List<Pokemon> getPokemonByType(String typeName) {
-        return pokemonRepository.findByTypeName(typeName);
+    public Page<Pokemon> getPokemonByType(String typeName, Pageable pageable) {
+        return pokemonRepository.findByTypeName(typeName, pageable);
+    }
+
+    //Obtener Pokemon por tipo y habilidad
+    @Transactional(readOnly = true)
+    public Page<Pokemon> getPokemonByTypeAndAbility(String typeName, String abilityName, Pageable pageable) {
+        return pokemonRepository.findByTypeNameAndAbilityName(typeName, abilityName, pageable);
     }
 
     // Obtener las evoluciones de un Pokémon por su ID
@@ -76,12 +88,6 @@ public class PokemonService {
     @Transactional(readOnly = true)
     public Optional<String> getSpriteById(Long id) {
         return pokemonRepository.findSpriteById(id);
-    }
-
-    // Obtener Pokémon por habilidad
-    @Transactional(readOnly = true)
-    public List<Pokemon> getPokemonByAbility(String abilityName) {
-        return pokemonRepository.findByAbilityName(abilityName);
     }
 
     //Obtener todos los tipos

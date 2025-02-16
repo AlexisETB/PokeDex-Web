@@ -81,6 +81,7 @@ public class PokeService {
         System.out.println("Iniciando sincronización completa de datos...");
         saveAllPokemon();
         saveAllEvolutions();
+        shutdownExecutor();
         long endTime = System.currentTimeMillis();
         System.out.println("Sincronización completa finalizada.");
         System.out.println("Tiempo total: " + (endTime - startTime)/1000 + " s");

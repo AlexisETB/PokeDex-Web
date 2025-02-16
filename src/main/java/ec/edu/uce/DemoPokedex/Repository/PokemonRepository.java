@@ -3,6 +3,7 @@ package ec.edu.uce.DemoPokedex.Repository;
 import ec.edu.uce.DemoPokedex.Model.Pokemon;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,12 +15,17 @@ public interface PokemonRepository extends JpaRepository<Pokemon, Long> {
 
 
     // Buscar Pokémon por tipo (nombre del tipo)
-    @Query("SELECT p FROM Pokemon p JOIN p.types t WHERE t.name = :typeName")
-    List<Pokemon> findByTypeName(@Param("typeName") String typeName);
+    @Query("SELECT DISTINCT p FROM Pokemon p LEFT JOIN FETCH p.types t WHERE t.name = :typeName")
+    Page<Pokemon> findByTypeName(@Param("typeName") String typeName, Pageable pageable);
 
     // Buscar Pokémon por habilidad (nombre de la habilidad)
-    @Query("SELECT p FROM Pokemon p JOIN p.abilities a WHERE a.name = :abilityName")
-    List<Pokemon> findByAbilityName(@Param("abilityName") String abilityName);
+    @EntityGraph(attributePaths = {"types"})
+    @Query("SELECT DISTINCT p FROM Pokemon p LEFT JOIN FETCH p.abilities a WHERE a.name = :abilityName")
+    Page<Pokemon> findByAbilityName(@Param("abilityName") String abilityName, Pageable pageable);
+
+    //Buscar Pokemon por typo y habilidad
+    @Query("SELECT DISTINCT p FROM Pokemon p LEFT JOIN FETCH p.types t LEFT JOIN FETCH p.abilities a WHERE t.name = :typeName AND a.name = :abilityName")
+    Page<Pokemon> findByTypeNameAndAbilityName(@Param("typeName") String typeName, @Param("abilityName") String abilityName, Pageable pageable);
 
     // Obtener un Pokémon junto con sus evoluciones
     @Query("SELECT p.evolutions FROM Pokemon p WHERE p.id = :id")

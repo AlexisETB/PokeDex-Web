@@ -39,7 +39,6 @@ public class PokeApiClient {
                 // Obtener la lista inicial de Pokémon (IDs y nombres)
                 String response = restTemplate.getForObject(url, String.class);
                 JsonNode root = objectMapper.readTree(response);
-
                 JsonNode results = root.get("results");
 
                 // Procesar URLs en paralelo con CompletableFuture

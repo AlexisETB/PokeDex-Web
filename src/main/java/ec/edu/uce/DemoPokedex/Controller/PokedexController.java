@@ -25,6 +25,7 @@ import javafx.scene.layout.GridPane;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 
 
@@ -222,8 +223,27 @@ public class PokedexController {
         Task<Page<Pokemon>> task = new Task<>() {
             @Override
             protected Page<Pokemon> call() {
+                Pageable pageable = PageRequest.of(page, 30);
 
-                return pokemonService.getAllPokemon(PageRequest.of(page, 30));
+                String typeFilter = filtrarTipo.getSelectionModel().getSelectedItem();
+                String abilityFilter = filtrarHabilidad.getSelectionModel().getSelectedItem();
+
+                if(typeFilter == null || abilityFilter == null){
+                    typeFilter = "All Types";
+                    abilityFilter = "All Abilities";
+                }
+                    boolean filtrarPorTipo = !typeFilter.equals("All Types");
+                    boolean filtrarPorHabilidad = !abilityFilter.equals("All Abilities");
+
+                    if (filtrarPorTipo && filtrarPorHabilidad) {
+                        return pokemonService.getPokemonByTypeAndAbility(typeFilter, abilityFilter, pageable);
+                    } else if(filtrarPorTipo){
+                        return pokemonService.getPokemonByType(typeFilter, pageable);
+                    } else if (filtrarPorHabilidad) {
+                        return pokemonService.getPokemonByAbility(abilityFilter, pageable);
+                    }else {
+                        return pokemonService.getAllPokemon(pageable);
+                    }
             }
         };
 
@@ -374,11 +394,17 @@ public class PokedexController {
     @FXML
     private void filtrarPorTipo()  {
         System.out.println("Filtrando por tipo");
+        currentPage = 0;
+        gridPanePokemon.getChildren().clear();
+        cargarPagina(currentPage);
     }
 
     @FXML
     private void filtrarPorHabilidad()  {
         System.out.println("Filtrando por habilidad");
+        currentPage = 0;
+        gridPanePokemon.getChildren().clear();
+        cargarPagina(currentPage);
     }
 
     @FXML
@@ -525,10 +551,10 @@ public class PokedexController {
         task.setOnSucceeded(e -> Platform.runLater(() -> {
             mostrarMensaje("Datos cargados exitosamente");
             gridPanePokemon.getChildren().clear();
-            currentPage = 0;
-            cargarPagina(currentPage);
             cargarTiposEnComboBox();
             cargarHabilidadesEnComboBox();
+            currentPage = 0;
+            cargarPagina(currentPage);
         }));
 
         backgroundExecutor.execute(task);

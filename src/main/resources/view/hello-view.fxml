@@ -462,12 +462,12 @@
                      <children>
                         <HBox prefHeight="68.0" prefWidth="300.0">
                            <children>
-                              <ComboBox fx:id="filtrarTipo" onAction="#filtrarPokemon" prefHeight="26.0" prefWidth="265.0" promptText="TIPO" styleClass="comboBox" stylesheets="@../values/styles.css" />
+                              <ComboBox fx:id="filtrarTipo" onAction="#filtrarPorTipo" prefHeight="26.0" prefWidth="265.0" promptText="TIPO" styleClass="comboBox" stylesheets="@../values/styles.css" />
                            </children>
                         </HBox>
                         <HBox prefHeight="68.0" prefWidth="311.0">
                            <children>
-                              <ComboBox fx:id="filtrarHabilidad" onAction="#filtrarPokemon" prefHeight="26.0" prefWidth="265.0" promptText="HABILIDAD" styleClass="comboBox" stylesheets="@../values/styles.css" />
+                              <ComboBox fx:id="filtrarHabilidad" onAction="#filtrarPorHabilidad" prefHeight="26.0" prefWidth="265.0" promptText="HABILIDAD" styleClass="comboBox" stylesheets="@../values/styles.css" />
                            </children>
                         </HBox>
                      </children>
