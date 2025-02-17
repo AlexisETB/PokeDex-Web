@@ -43,7 +43,9 @@ public class PokeService {
 
     // Metodo para guardar todas las evoluciones desde la API
     public Mono<Void> saveAllEvolutions() {
-        return Flux.fromIterable(pokemonRepository.findAll())
+        return Mono.fromCallable(() -> pokemonRepository.findAll())
+                .subscribeOn(Schedulers.boundedElastic())
+                .flatMapMany(Flux::fromIterable)
                 .parallel()
                 .runOn(Schedulers.boundedElastic())
                 .flatMap(pokemon ->
@@ -54,7 +56,7 @@ public class PokeService {
                                     return Mono.fromRunnable(() -> pokemonRepository.save(pokemon));
                                 })
                                 .onErrorResume(e -> {
-                                    System.err.println("Error procesando evoluciones para: " + pokemon.getName());
+                                    System.err.println("Error procesando evoluciones para: " + pokemon.getName() + ": " + e.getMessage());
                                     return Mono.empty();
                                 })
                 )

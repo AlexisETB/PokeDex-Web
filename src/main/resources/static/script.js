@@ -118,17 +118,31 @@ function updatePokemonGrid(pokemonList, append = false) {
     });
 }
 
+async function fetchPokemonData(url) {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Error al cargar los Pokémon: ${response.statusText}`);
+    }
+    return await response.json();
+
+}
+
 /**
  * Actualiza la sección de detalles del Pokémon (lado izquierdo).
  * Muestra nombre, descripción, imagen, información, tipos y estadísticas.
  * @param {Object} pokemon Objeto Pokémon con sus datos.
  */
 function displayPokemonDetails(pokemon) {
-    document.getElementById('pokemonTitle').textContent = pokemon.name;
-    document.getElementById('pokemonDescription').textContent = pokemon.description || "";
+    document.getElementById('pokemonName').textContent = pokemon.name || "Desconocido";
+    document.getElementById('pokemonId').textContent = pokemon.id ? `#${pokemon.id}` : "";
+    document.getElementById('pokemonDescription').textContent = pokemon.description || "No hay descripción disponible.";
     document.getElementById('pokemonImage').src = pokemon.sprites?.frontDefault || '/placeholder.svg';
     document.getElementById('pokemonHeight').textContent = `Altura: ${pokemon.height}`;
     document.getElementById('pokemonWeight').textContent = `Peso: ${pokemon.weight}`;
+    // Mostrar habilidades
+    document.getElementById('pokemonAbility').textContent = pokemon.abilities?.length
+        ? `Habilidades: ${pokemon.abilities.map(a => a.name).join(', ')}`
+        : "Habilidades: No disponible";
 
     // Mostrar tipos
     const typesDiv = document.getElementById('pokemonTypes');
@@ -139,7 +153,6 @@ function displayPokemonDetails(pokemon) {
     }
 
     // Actualizar estadísticas básicas usando elementos <progress>
-    // Se asume que pokemon.stats es un arreglo de objetos con propiedades 'name' y 'baseStat'
     const statMapping = {
         'hpStat': 'PS',
         'attackStat': 'Ataque',
@@ -148,18 +161,43 @@ function displayPokemonDetails(pokemon) {
         'spDefenseStat': 'Defensa Especial',
         'speedStat': 'Velocidad'
     };
-    for (let statId in statMapping) {
-        const statElement = document.getElementById(statId);
-        if (pokemon.stats) {
-            // Se busca el stat cuyo nombre coincida (en minúsculas para evitar problemas)
-            const stat = pokemon.stats.find(s => s.name.toLowerCase() === statMapping[statId].toLowerCase());
-            statElement.value = stat ? stat.baseStat : 0;
-        } else {
-            statElement.value = 0;
-        }
+    if (pokemon.stats && Array.isArray(pokemon.stats)) {
+        Object.keys(statMapping).forEach(statId => {
+            const statElement = document.getElementById(statId);
+            if (statElement) {
+                const stat = pokemon.stats.find(s => s.name.toLowerCase() === statMapping[statId]);
+                statElement.value = stat ? stat.baseStat : 0;
+            }
+        });
+    } else {
+        console.warn("No se encontraron estadísticas.");
+        Object.keys(statMapping).forEach(statId => {
+            const statElement = document.getElementById(statId);
+            if (statElement) {
+                statElement.value = 0;
+            }
+        });
     }
 
-    // (Opcional) Si deseas cargar la cadena de evoluciones, podrías hacer otra petición aquí.
+    fetch(`/api/Pokemon/evolutions/${pokemon.id}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("No se pudo obtener la cadena de evolución.");
+            }
+            return response.json();
+        })
+        .then(evolutions => {
+            const evolutionDiv = document.getElementById('evolutionChain');
+            if (evolutions.length > 0) {
+                evolutionDiv.innerHTML = `<strong>Evoluciones:</strong> ${evolutions.join(' ➝ ')}`;
+            } else {
+                evolutionDiv.innerHTML = `<strong>Evoluciones:</strong> No disponibles`;
+            }
+        })
+        .catch(error => {
+            console.error("Error obteniendo evoluciones:", error);
+            document.getElementById('evolutionChain').innerHTML = `<strong>Evoluciones:</strong> No disponibles`;
+        });
 }
 
 /**

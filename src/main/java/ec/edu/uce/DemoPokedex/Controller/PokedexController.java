@@ -81,7 +81,7 @@ public class PokedexController {
 
     @PostMapping("/load")
     public ResponseEntity<Void> loadPokemonData() {
-        pokeService.saveAllPokemon().subscribe();
+        pokeService.saveAllData().subscribe();
         return ResponseEntity.ok().build();
     }
 

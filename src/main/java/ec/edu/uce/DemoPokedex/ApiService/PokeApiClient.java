@@ -137,12 +137,17 @@ public Mono<String> getEvolutionChainUrl(Long pokemonId) {
 
     private Long extractIdFromUrl(String url) {
         String[] parts = url.split("/");
+        String lastPart = parts[parts.length - 1];
+        if (lastPart.isEmpty() && parts.length >= 2) {
+            lastPart = parts[parts.length - 2];
+        }
         try {
-            return Long.parseLong(parts[parts.length - 1]);
+            return Long.parseLong(lastPart);
         } catch (NumberFormatException e) {
             return null;
         }
     }
+
 
     private String getSpriteValue(JsonNode root, String spriteKey) {
         return root.get("sprites").has(spriteKey) && !root.get("sprites").get(spriteKey).isNull()
