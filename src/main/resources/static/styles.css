@@ -84,11 +84,16 @@ body {
     text-align: left;
     padding: 20px;
 }
-
-#pokemonImage {
-    max-width: 150px;
-    height: auto;
-    margin: 20px 0;
+.details-container{
+    display: flex;
+    gap: 10px;
+}
+.img-container{
+    width: 300px;
+}
+.img-container img {
+    width: 100%;
+    object-fit: contain;
 }
 
 .pokemon-info {

@@ -15,10 +15,7 @@ async function loadData() {
         }
         alert("Datos cargados exitosamente");
         // Después de cargar, pobla los filtros y carga la primera página de Pokémon
-        await loadFilters();
-        currentPage = 0;
-        await loadPokemon(currentPage, false);
-        initialLoadDone = true;
+
     } catch (error) {
         console.error(error);
         alert(error.message);
@@ -134,7 +131,13 @@ function updatePokemonGrid(pokemonList, append = false) {
  * Muestra nombre, descripción, imagen, información, tipos y estadísticas.
  * @param {Object} pokemon Objeto Pokémon con sus datos.
  */
-function displayPokemonDetails(pokemon) {
+async function displayPokemonDetails(pokemon) {
+    if (!initialLoadDone) {
+        await loadFilters();
+        currentPage = 0;
+        await loadPokemon(currentPage, false);
+        initialLoadDone = true;
+    }
     document.getElementById('pokemonName').textContent = pokemon.name || "Desconocido";
     document.getElementById('pokemonId').textContent = pokemon.id ? `#${pokemon.id}` : "";
     document.getElementById('pokemonDescription').textContent = pokemon.description || "No hay descripción disponible.";
@@ -149,8 +152,21 @@ function displayPokemonDetails(pokemon) {
 
     // Mostrar tipos
     const typesDiv = document.getElementById('pokemonTypes');
+    typesDiv.innerHTML = '';
     if (pokemon.types && pokemon.types.length > 0) {
-        typesDiv.textContent = "Tipos: " + pokemon.types.map(t => t.name).join(', ');
+        typesDiv.textContent = "Tipos: ";
+        pokemon.types.forEach(type => {
+            const typeSpan = document.createElement('span');
+            typeSpan.classList.add('type');
+            typeSpan.textContent = type.name;
+            typeSpan.style.backgroundColor = getTypeColor(type.name);
+            typeSpan.style.marginLeft = "5px"; // Espaciado entre tipos
+            typeSpan.style.padding = "3px 6px"; // Estilizado básico
+            typeSpan.style.borderRadius = "5px"; // Bordes redondeados
+            typeSpan.style.color = "#fff"; // Texto blanco para contraste
+
+            typesDiv.appendChild(typeSpan);
+        });
     } else {
         typesDiv.textContent = "";
     }
@@ -196,10 +212,55 @@ function displayPokemonDetails(pokemon) {
             }
             return response.json();
         })
-        .then(evolutions => {
+        .then(async (evolutionIds) => {
             const evolutionDiv = document.getElementById('evolutionChain');
-            if (evolutions.length > 0) {
-                evolutionDiv.innerHTML = `<strong>Evoluciones:</strong> ${evolutions.join(' ➝ ')}`;
+            evolutionDiv.innerHTML = ''; // Limpiar contenido previo
+
+            if (evolutionIds.length > 0) {
+                // Encabezado
+                evolutionDiv.innerHTML = '<strong>Evoluciones:</strong>';
+
+                // Por cada id en la cadena de evoluciones, obtenemos los datos detallados
+                for (const evolutionId of evolutionIds) {
+                    try {
+                        // Se asume que el endpoint para obtener los datos de un Pokémon por id es: /api/Pokemon/{id}
+                        const evoResponse = await fetch(`/api/Pokemon/${evolutionId}`);
+                        if (!evoResponse.ok) {
+                            console.error(`No se pudo obtener datos de evolución para el id: ${evolutionId}`);
+                            continue;
+                        }
+                        const evoData = await evoResponse.json();
+
+                        // Crear un contenedor para la evolución
+                        const evolutionItem = document.createElement('div');
+                        evolutionItem.classList.add('evolution-item');
+
+                        // Generar el HTML para los tipos con fondo de color
+                        let typesHtml = '';
+                        if (evoData.types && evoData.types.length > 0) {
+                            typesHtml = 'Tipos: ';
+                            evoData.types.forEach(t => {
+                                const typeColor = getTypeColor(t.name);
+                                typesHtml += `<span class="type" style="
+                                background-color: ${typeColor};
+                                margin-left: 5px;
+                                padding: 3px 6px;
+                                border-radius: 5px;
+                                color: #fff;">${t.name}</span>`;
+                            });
+                        }
+
+                        evolutionItem.innerHTML = `
+                        <img src="${evoData.sprites?.frontDefault || '/placeholder.svg'}" alt="${evoData.name}">
+                        <p>${evoData.name}</p>
+                        <p>#${evoData.id}</p>
+                        <div>${typesHtml}</div>
+                    `;
+                        evolutionDiv.appendChild(evolutionItem);
+                    } catch (err) {
+                        console.error("Error interno al procesar una evolución:", err);
+                    }
+                }
             } else {
                 evolutionDiv.innerHTML = `<strong>Evoluciones:</strong> No disponibles`;
             }
@@ -208,6 +269,7 @@ function displayPokemonDetails(pokemon) {
             console.error("Error obteniendo evoluciones:", error);
             document.getElementById('evolutionChain').innerHTML = `<strong>Evoluciones:</strong> No disponibles`;
         });
+
 }
 
 /**
@@ -263,6 +325,16 @@ window.addEventListener('scroll', () => {
         loadPokemon(currentPage, true);
     }
 });
+
+function getTypeColor(type) {
+    const typeColors = {
+        normal: '#A8A878', fire: '#F08030', water: '#6890F0', electric: '#F8D030', grass: '#78C850',
+        ice: '#98D8D8', fighting: '#C03028', poison: '#A040A0', ground: '#E0C068', flying: '#A890F0',
+        psychic: '#F85888', bug: '#A8B820', rock: '#B8A038', ghost: '#705898', dragon: '#7038F8',
+        dark: '#705848', steel: '#B8B8D0', fairy: '#EE99AC'
+    };
+    return typeColors[type] || '#68A090';
+}
 
 /*
  * Event Listeners para los botones y filtros:
