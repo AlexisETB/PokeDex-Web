@@ -7,25 +7,26 @@
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <div class="container">
-    <div class="left-section">
-      <div class="search-area">
-        <input type="text" id="searchName" placeholder="Buscar por nombre">
-        <button id="searchNameBtn">Buscar</button>
-        <input type="number" id="searchNumber" placeholder="Buscar por número">
-        <button id="searchNumberBtn">Buscar</button>
+<div class="container">
+  <div class="left-section">
+    <div class="search-area">
+      <input type="text" id="searchName" placeholder="Buscar por nombre">
+      <button id="searchNameBtn">Buscar</button>
+      <input type="number" id="searchNumber" placeholder="Buscar por número">
+      <button id="searchNumberBtn">Buscar</button>
     </div>
     <div class="pokemon-details">
-      <h2 id="pokemonTitle"></h2>
+      <h2 id="pokemonTitle"><span id="pokemonName"></span> <span id="pokemonId" class="pokemon-id"></span></h2>
       <p id="pokemonDescription"></p>
-      <img id="pokemonImage" src="/placeholder.svg" alt="Pokémon">
-      <div class="pokemon-info">
-        <p id="pokemonHeight"></p>
-        <p id="pokemonWeight"></p>
-        <p id="pokemonCategory"></p>
-        <p id="pokemonAbility"></p>
+      <div class="details-container">
+        <img id="pokemonImage" src="/placeholder.svg" alt="Pokémon" class="large-image">
+        <div class="pokemon-info">
+          <p id="pokemonHeight"></p>
+          <p id="pokemonWeight"></p>
+          <p id="pokemonAbility"></p>
+          <div id="pokemonTypes"></div>
+        </div>
       </div>
-      <div id="pokemonTypes"></div>
       <div class="base-stats">
         <div class="stat-bar">
           <label for="hpStat">PS</label>
@@ -69,6 +70,5 @@
   </div>
 </div>
 <script src="/script.js"></script>
-
 </body>
 </html>
