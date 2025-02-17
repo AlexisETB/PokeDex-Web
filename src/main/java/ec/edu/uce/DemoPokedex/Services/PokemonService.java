@@ -25,6 +25,7 @@ public class PokemonService {
     private AbilityRepository abilityRepository;
 
 
+
     // Obtener todos los Pokémon
     @Transactional(readOnly = true)
     public Page<Pokemon> getAllPokemon(Pageable pageable) {

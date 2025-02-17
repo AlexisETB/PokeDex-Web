@@ -25,15 +25,20 @@ public class PokeService {
 
     // Metodo para guardar todos los Pokémon desde la API
     public Mono<Void> saveAllPokemon() {
+        final int[] totalSaved = {0};
         return pokeApiClient.getAllPokemon()
                 .parallel()
                 .runOn(Schedulers.boundedElastic())
                 .flatMap(pokemon ->
-                        Mono.fromRunnable(()-> pokemonRepository.save(pokemon))
+                        Mono.fromRunnable(()-> {pokemonRepository.save(pokemon); totalSaved[0]++;})
                                 .subscribeOn(Schedulers.boundedElastic()))
                 .sequential().then().doOnSubscribe(s -> System.out.println("Iniciando Guardado de Pokémon..."))
-                .doOnSuccess(v -> System.out.println("Guardado de Pokémon completado. Total guardados: " + pokemon.size()))
-                .doOnEach(e -> System.out.println("Error durante el guardado de Pokémon: " + e.getMessage()));
+                .doOnSuccess(v -> System.out.println("Guardado de Pokémon completado. Total guardados: " + totalSaved[0]))
+                .doOnEach(e -> {
+                    if (e.getThrowable() != null){
+                        System.err.println("Error durante el guardado de Pokémon: " + e.getThrowable().getMessage());
+                    }
+                });
     }
 
     // Metodo para guardar todas las evoluciones desde la API
