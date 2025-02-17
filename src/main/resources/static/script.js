@@ -8,7 +8,7 @@ let isLoading = false;
  */
 async function loadData() {
     try {
-        const response = await fetch('/api/pokemon/load', { method: 'POST' });
+        const response = await fetch('/api/load', { method: 'POST' });
         if (!response.ok) {
             throw new Error(`Error al cargar datos: ${response.statusText}`);
         }
@@ -69,7 +69,7 @@ async function loadPokemon(page = 0, append = false) {
     isLoading = true;
 
     // Construir la URL con parámetros de paginación
-    let url = `/api/pokemon?page=${page}&size=30`;
+    let url = `/api/Pokemon?page=${page}&size=30`;
     const typeFilter = document.getElementById('typeFilter').value;
     const abilityFilter = document.getElementById('abilityFilter').value;
     if (typeFilter) {
@@ -172,7 +172,7 @@ async function searchPokemonByName() {
         return;
     }
     try {
-        const response = await fetch(`/api/pokemon/name/${encodeURIComponent(name)}`);
+        const response = await fetch(`/api/Pokemon/name/${encodeURIComponent(name)}`);
         if (!response.ok) throw new Error("Pokémon no encontrado.");
         const pokemon = await response.json();
         displayPokemonDetails(pokemon);
@@ -192,7 +192,7 @@ async function searchPokemonByNumber() {
         return;
     }
     try {
-        const response = await fetch(`/api/pokemon/${number}`);
+        const response = await fetch(`/api/Pokemon/${number}`);
         if (!response.ok) throw new Error("Pokémon no encontrado.");
         const pokemon = await response.json();
         displayPokemonDetails(pokemon);

@@ -21,7 +21,7 @@ public class PokeApiClient {
     private static final String BASE_URL = "https://pokeapi.co/api/v2/";
 
     public PokeApiClient(WebClient.Builder webClientBuilder) {
-       this.webClient = webClientBuilder.baseUrl(BASE_URL).build();
+       this.webClient = webClientBuilder.baseUrl(BASE_URL).codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024)).build();
         this.objectMapper = new ObjectMapper();
     }
 
