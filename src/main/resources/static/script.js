@@ -1,6 +1,7 @@
 // Variables globales para la paginación y estado de carga
 let currentPage = 0;
 let isLoading = false;
+let initialLoadDone = false; // Indica si ya se cargó la primera página (y filtros) sin activar scroll
 
 /**
  * Carga los datos en la base de datos desde la API externa.
@@ -16,7 +17,8 @@ async function loadData() {
         // Después de cargar, pobla los filtros y carga la primera página de Pokémon
         await loadFilters();
         currentPage = 0;
-        loadPokemon(currentPage, false);
+        await loadPokemon(currentPage, false);
+        initialLoadDone = true;
     } catch (error) {
         console.error(error);
         alert(error.message);
@@ -32,8 +34,16 @@ async function loadFilters() {
             fetch('/api/types'),
             fetch('/api/abilities')
         ]);
-        const types = await typesRes.json();
-        const abilities = await abilitiesRes.json();
+        const typesData = await typesRes.json();
+        const abilitiesData = await abilitiesRes.json();
+
+        // Debug: verificar lo que se recibe en consola
+        console.log("Tipos recibidos:", typesData);
+        console.log("Habilidades recibidas:", abilitiesData);
+
+        // Asegurarse de que los datos sean arrays (si no, intentar acceder a la propiedad "content")
+        const types = Array.isArray(typesData) ? typesData : (typesData.content || []);
+        const abilities = Array.isArray(abilitiesData) ? abilitiesData : (abilitiesData.content || []);
 
         // Rellenar el select de Tipos
         const typeSelect = document.getElementById('typeFilter');
@@ -67,6 +77,7 @@ async function loadFilters() {
 async function loadPokemon(page = 0, append = false) {
     if (isLoading) return;
     isLoading = true;
+    console.log("Cargando página:", page);
 
     // Construir la URL con parámetros de paginación
     let url = `/api/Pokemon?page=${page}&size=30`;
@@ -106,25 +117,16 @@ function updatePokemonGrid(pokemonList, append = false) {
         const card = document.createElement("div");
         card.classList.add("pokemon-card");
         card.innerHTML = `
-      <h3>${pokemon.name}</h3>
-      <img src="${pokemon.sprites?.frontDefault || '/placeholder.svg'}" alt="${pokemon.name}" />
-      <p>#${pokemon.id}</p>
-    `;
+            <h3>${pokemon.name}</h3>
+            <img src="${pokemon.sprites?.frontDefault || '/placeholder.svg'}" alt="${pokemon.name}" />
+            <p>#${pokemon.id}</p>
+        `;
         // Al hacer clic en la tarjeta, se muestran los detalles en la sección izquierda
         card.addEventListener('click', () => {
             displayPokemonDetails(pokemon);
         });
         container.appendChild(card);
     });
-}
-
-async function fetchPokemonData(url) {
-    const response = await fetch(url);
-    if (!response.ok) {
-        throw new Error(`Error al cargar los Pokémon: ${response.statusText}`);
-    }
-    return await response.json();
-
 }
 
 /**
@@ -139,6 +141,7 @@ function displayPokemonDetails(pokemon) {
     document.getElementById('pokemonImage').src = pokemon.sprites?.frontDefault || '/placeholder.svg';
     document.getElementById('pokemonHeight').textContent = `Altura: ${pokemon.height}`;
     document.getElementById('pokemonWeight').textContent = `Peso: ${pokemon.weight}`;
+
     // Mostrar habilidades
     document.getElementById('pokemonAbility').textContent = pokemon.abilities?.length
         ? `Habilidades: ${pokemon.abilities.map(a => a.name).join(', ')}`
@@ -152,21 +155,27 @@ function displayPokemonDetails(pokemon) {
         typesDiv.textContent = "";
     }
 
-    // Actualizar estadísticas básicas usando elementos <progress>
+    // Actualizar estadísticas usando <progress>
     const statMapping = {
-        'hpStat': 'PS',
-        'attackStat': 'Ataque',
-        'defenseStat': 'Defensa',
-        'spAttackStat': 'Ataque Especial',
-        'spDefenseStat': 'Defensa Especial',
-        'speedStat': 'Velocidad'
+        'hpStat': 'hp',
+        'attackStat': 'attack',
+        'defenseStat': 'defense',
+        'spAttackStat': 'special-attack',
+        'spDefenseStat': 'special-defense',
+        'speedStat': 'speed'
     };
+
     if (pokemon.stats && Array.isArray(pokemon.stats)) {
         Object.keys(statMapping).forEach(statId => {
             const statElement = document.getElementById(statId);
             if (statElement) {
-                const stat = pokemon.stats.find(s => s.name.toLowerCase() === statMapping[statId]);
-                statElement.value = stat ? stat.baseStat : 0;
+                const stat = pokemon.stats.find(s => s.name.toLowerCase().trim() === statMapping[statId]);
+                if (stat) {
+                    statElement.value = stat.baseStat;
+                    statElement.max = 200; // Valor máximo estándar
+                } else {
+                    statElement.value = 0;
+                }
             }
         });
     } else {
@@ -179,6 +188,7 @@ function displayPokemonDetails(pokemon) {
         });
     }
 
+    // Obtener y mostrar las evoluciones desde el endpoint correspondiente
     fetch(`/api/Pokemon/evolutions/${pokemon.id}`)
         .then(response => {
             if (!response.ok) {
@@ -245,10 +255,12 @@ async function searchPokemonByNumber() {
  * Cuando el usuario se acerca al final de la página, se carga la siguiente página de Pokémon.
  */
 window.addEventListener('scroll', () => {
-    // Se verifica si se llegó cerca del final de la página (por ejemplo, a 100px de distancia)
-    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100 && !isLoading) {
+    const scrollPosition = window.innerHeight + window.scrollY;
+    const threshold = document.documentElement.scrollHeight - 150; // Umbral de 150px
+    if (initialLoadDone && !isLoading && scrollPosition >= threshold) {
         currentPage++;
-        loadPokemon(currentPage, true); // Se añaden más tarjetas sin limpiar el grid
+        console.log("Scroll infinito: cargando página", currentPage);
+        loadPokemon(currentPage, true);
     }
 });
 
@@ -264,14 +276,24 @@ document.getElementById('searchNameBtn').addEventListener('click', searchPokemon
 // Botón para buscar por número
 document.getElementById('searchNumberBtn').addEventListener('click', searchPokemonByNumber);
 
-// Cuando se cambia el filtro de tipo o habilidad, se reinicia la paginación y se recarga la lista
+// Al cambiar el filtro de tipo o habilidad, reiniciamos la paginación y desactivamos temporalmente el scroll infinito
 document.getElementById('typeFilter').addEventListener('change', () => {
     currentPage = 0;
-    loadPokemon(currentPage, false);
+    window.scrollTo(0, 0);
+    initialLoadDone = false;
+    loadPokemon(currentPage, false).then(() => { initialLoadDone = true; });
 });
 document.getElementById('abilityFilter').addEventListener('change', () => {
     currentPage = 0;
-    loadPokemon(currentPage, false);
+    window.scrollTo(0, 0);
+    initialLoadDone = false;
+    loadPokemon(currentPage, false).then(() => { initialLoadDone = true; });
 });
 
-// (Opcional) Si ya se han cargado datos previamente, puedes llamar a loadPokemon(currentPage, false) al inicio.
+// También se pueden cargar los filtros al inicio si se desea que siempre estén disponibles
+document.addEventListener("DOMContentLoaded", () => {
+    loadFilters();
+    // Si deseas cargar la lista de Pokémon al iniciar (solo si ya hay datos en el backend)
+    // currentPage = 0;
+    // loadPokemon(currentPage, false).then(() => { initialLoadDone = true; });
+});
